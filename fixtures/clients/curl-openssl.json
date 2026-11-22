@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "tool": "clienthello_peek",
+  "label": "curl-openssl",
+  "captured_at": "2026-11-22T19:19:52+00:00",
+  "peer": "127.0.0.1:38310",
+  "raw": "160301061e0100061a03032b6e7b8858747098decb536c340b57d64843a949b254c40bf6a194df1164910d200aba439c7717d89fb57489ed8ec01e022e290b3925cda4b1cb45f98ebc3a1d93003c130213031301c02cc030009fcca9cca8ccaac02bc02f009ec024c028006bc023c0270067c00ac0140039c009c0130033009d009c003d003c0035002f01000595ff0100010000000010000e00000b746c732e706565742e7773000b000403000102000a0012001011ec001d0017001e00180019010001010010000e000c02683208687474702f312e31001600000017000000310000000d0036003409050906090404030503060308070808081a081b081c0809080a080b080408050806040105010601030303010302040205020602002b00050403040303002d00020101003304ea04e811ec04c0e74356f458989c763867c42fdfe536cb6c7c10048ed8b2bd8fa842d7853aaf5191dd5ac0cf271031a74d4d61c5cff65f60090488cc69b715c22f32974f518faed61ec7037200c859c8f5a00edc02de335bcfe1b5151180ff05296d113d7be35dad557c3af69865ab77f016815cdca5ab846bc58b86b5c961df81cac1213fb4848958e4cc09656365b00c612016933b95a706bf46809ba14a51dce99a724a7330ea43a83b1a24aa512b51c16ae62878868bce2472f8e61e5a9682dd22907ae7850243081eb69dea6c0e20197ac6bba14acbcc19372cceeb884e83b46f195bba32384b093a947abee627974247cfd55b751af0a9d1cb77e7342922060922e13f35ea351b5c86960626edc383134aba47398d79c94d0f568c80f68f4fc19bc5e0ba1a93749a2a96edd486c524693072a73fe5942c8a20cd9723b8c2882ea28375b93be529a0a0712defd01235f415572510e8c7ce461b5ef5b69293b98040d3a2893275bf6377ccb77991da45207a92d7fcc98f4440e9978fead32eac39272d002767ea82b2d79d246022eaa4c50049502280259ec01f623c8883848a0ab5762ca5a92d1cc347e474b6d2ab6ec59bf4d1148e880865c75de785526f301c87167ed279bb3fac6ed3a215412648fc9cbdae66805d15c454861596984a082ba9e33464252abe87c92fa8d1c8a6fa9a640651693c5cd36141ffd272f1493604b91495ec60ff61cc9ee283e6a642c8968664655881fa1d0377cbf99a2d1e4055a4741aaaa1a658511e03e427cb842cf81928f456186b784cc901469d2894ff4b89f3c88b92d9c44d134009bca47f97c3b42115584c1d5c43a4a3a8c3b7c6ac95f131852a8db9182b464591856ccb09b99e6a8ab18cd39fdfe7a688fa7e7637846fbb312b4c46193b5f826251fef607f1009cee939d70a6a481f621da31a90e39cc06d805ff8ccc1a960599bb908a9c3c8a75575b4012bb9b4dd4a7215fba27cb578137586e1a5a560c571cb778c3cc23c0e5483924c001bde72b0dd435249c58473c8f3fc9ab4758afda56080af67d71c801be2b9daf7a02ef15cab4f2949d82aa0cfb4a0842ca3c99c119d70d2e97a19a850ad797cf2cd87cb84b3389fb3319cc9281c39bbec66d63a9584474cd211c21f916042e0116e21b1aaf9c336b87b8722a262be77e86e77c1db7ce37bc69697bc2f0c96eb2db23d16271b7077f61773aef8159674361d4597b22b8cc4945078fa6a210552f96b498ec02442d170f8ea187598a212f56359ca6093a864ec1c6504d226a9896438920282f2b0d09f4c89b4b9261948f44ebb8c28cc9abe57f59038911f982baaa341a8401e2d3656aa5c1c01937d17c7c0fb8ae8e45672e026903c97c89f6158dfa3f0e97191d814c731592bb79b4013b24714a4839746bdeaa9960a4031e4c0ba2285b4c3966eab5ae0bf9a2b6ac05fc8251d80353e3881d7460b7e9779eb67c393b0789f9a631bc62000ababcd2e1c823b0c1eeeb6d3a666639795da41946df51aef738342524a99c170407f7b7913a38cf1765372864c2e7a89de2cd573b8e57929735e7cf563364e8f94b4ac39957568e1771175fe88600128f4b91091cf82b923cbb6988b3a6e7030110007d1d23b1ac610acb090f005510fe17af7384858464f1d85f1ddcd0188433b1bf147d71fe1710b202bd2cd94a63b38ea857886a8a641e0ee0d3f0560c7bf0162a001d0020d5caf93d1b6863bbef13b5c47fd6790f22441e535c1bed97ba7cd63d5d33554c001b00050400010003",
+  "ja4": "t13d3013h2_1d37bd780c83_8537cf56674e",
+  "ja4_r": "t13d3013h2_002f,0033,0035,0039,003c,003d,0067,006b,009c,009d,009e,009f,1301,1302,1303,c009,c00a,c013,c014,c023,c024,c027,c028,c02b,c02c,c02f,c030,cca8,cca9,ccaa_000a,000b,000d,0016,0017,001b,002b,002d,0031,0033,ff01_0905,0906,0904,0403,0503,0603,0807,0808,081a,081b,081c,0809,080a,080b,0804,0805,0806,0401,0501,0601,0303,0301,0302,0402,0502,0602",
+  "fields": {
+    "record_version": "0301",
+    "legacy_version": "0303",
+    "session_id": "0aba439c7717d89fb57489ed8ec01e022e290b3925cda4b1cb45f98ebc3a1d93",
+    "ciphers": [
+      "1302",
+      "1303",
+      "1301",
+      "c02c",
+      "c030",
+      "009f",
+      "cca9",
+      "cca8",
+      "ccaa",
+      "c02b",
+      "c02f",
+      "009e",
+      "c024",
+      "c028",
+      "006b",
+      "c023",
+      "c027",
+      "0067",
+      "c00a",
+      "c014",
+      "0039",
+      "c009",
+      "c013",
+      "0033",
+      "009d",
+      "009c",
+      "003d",
+      "003c",
+      "0035",
+      "002f"
+    ],
+    "compressions": [
+      "00"
+    ],
+    "extensions": [
+      {
+        "type": 65281,
+        "name": "renegotiation_info",
+        "len": 1
+      },
+      {
+        "type": 0,
+        "name": "server_name",
+        "len": 16
+      },
+      {
+        "type": 11,
+        "name": "ec_point_formats",
+        "len": 4
+      },
+      {
+        "type": 10,
+        "name": "supported_groups",
+        "len": 18
+      },
+      {
+        "type": 16,
+        "name": "alpn",
+        "len": 14
+      },
+      {
+        "type": 22,
+        "name": "encrypt_then_mac",
+        "len": 0
+      },
+      {
+        "type": 23,
+        "name": "extended_master_secret",
+        "len": 0
+      },
+      {
+        "type": 49,
+        "name": "post_handshake_auth",
+        "len": 0
+      },
+      {
+        "type": 13,
+        "name": "signature_algorithms",
+        "len": 54
+      },
+      {
+        "type": 43,
+        "name": "supported_versions",
+        "len": 5
+      },
+      {
+        "type": 45,
+        "name": "psk_key_exchange_modes",
+        "len": 2
+      },
+      {
+        "type": 51,
+        "name": "key_share",
+        "len": 1258
+      },
+      {
+        "type": 27,
+        "name": "compress_certificate",
+        "len": 5
+      }
+    ],
+    "sni": "tls.peet.ws",
+    "alpn": [
+      "h2",
+      "http/1.1"
+    ],
+    "supported_versions": [
+      "0304",
+      "0303"
+    ],
+    "signature_algorithms": [
+      "0905",
+      "0906",
+      "0904",
+      "0403",
+      "0503",
+      "0603",
+      "0807",
+      "0808",
+      "081a",
+      "081b",
+      "081c",
+      "0809",
+      "080a",
+      "080b",
+      "0804",
+      "0805",
+      "0806",
+      "0401",
+      "0501",
+      "0601",
+      "0303",
+      "0301",
+      "0302",
+      "0402",
+      "0502",
+      "0602"
+    ],
+    "key_share_groups": [
+      "11ec",
+      "001d"
+    ],
+    "supported_groups": [
+      "11ec",
+      "001d",
+      "0017",
+      "001e",
+      "0018",
+      "0019",
+      "0100",
+      "0101"
+    ],
+    "psk_modes": [
+      "01"
+    ],
+    "cert_compression": [
+      "0001",
+      "0003"
+    ]
+  }
+}
