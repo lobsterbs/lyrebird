@@ -66,7 +66,11 @@ Seeded 2026-11-22. Shipped so far: the [#1](../../issues/1) capture harness
 (`tools/capture` builds JA4 from real ClientHellos, fixtures verified against
 the tls.peet.ws oracle) and the [#2](../../issues/2) patch pipeline with its
 baseline CI (pinned rustls v/0.23.46, zero patches, native and wasm32 checks
-green). Next on the roadmap: [#3](../../issues/3) the Chrome ClientHello
+green). The baseline shape itself is pinned too: `crates/handshake-probe`
+performed a live handshake against tls.peet.ws and the committed
+`rustls-baseline` fixture matches the server-side view
+(`t13d101000_61a7ad8aa9b6_3fcd1a44f3e3`). Next on the roadmap:
+[#3](../../issues/3) the Chrome ClientHello
 extension layer, [#4](../../issues/4) Chrome advanced tells,
 [#5](../../issues/5) the Firefox profile, [#6](../../issues/6) the
 EpoxyIdentity seam and parity gate.
@@ -87,5 +91,7 @@ EpoxyIdentity seam and parity gate.
 
 - [MercuryWorkshop/epoxy-tls](https://github.com/MercuryWorkshop/epoxy-tls):
   upstream epoxy, the wasm TLS transport these profiles are shaped for.
+- [lobsterbs/epoxy-tls](https://github.com/lobsterbs/epoxy-tls): our fork of
+  upstream, the development base for the EpoxyIdentity seam.
 - [lobsterbs/LobsterBrowse](https://github.com/lobsterbs/LobsterBrowse): the
   product surface.

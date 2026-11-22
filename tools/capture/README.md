@@ -45,3 +45,26 @@ bug: file it before adding the pair.
 The h2 SETTINGS half of the capture story (connection preface frame, sent
 field order) needs a terminating h2 server and is not built yet; see issue
 #1.
+
+## Capture the rustls baseline
+
+`crates/handshake-probe` drives the pinned rustls through a real handshake,
+so the baseline we patch away from is on record too. Build it with
+`cd crates/handshake-probe && cargo build` (it path-depends on the rustls the
+apply-rustls pipeline unpacks), then:
+
+```sh
+python3 tools/capture/peek.py --port 18444 --out fixtures/clients --label rustls-baseline &
+sleep 1  # wait for the listener
+./target/debug/handshake-probe local tls.peet.ws 18444
+# same build, live oracle view:
+./target/debug/handshake-probe live tls.peet.ws 443 /api/all
+```
+
+The capture-mode verifier accepts any server (peek.py never completes the
+handshake) but advertises exactly the signature schemes the live WebPKI
+verifier does, so both ClientHellos hash identically. The committed pair
+`fixtures/{clients,oracle}/rustls-baseline.json` is that proof: the local
+capture and the live server view agree on
+`t13d101000_61a7ad8aa9b6_3fcd1a44f3e3` (the oracle note records peet's
+one-zero ALPN rendering and the spec's `00` form).

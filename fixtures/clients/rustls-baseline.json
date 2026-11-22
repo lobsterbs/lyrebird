@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "tool": "clienthello_peek",
+  "label": "rustls-baseline",
+  "captured_at": "2026-11-22T20:03:27+00:00",
+  "peer": "127.0.0.1:60112",
+  "raw": "16030100e9010000e50303ae3585d902ff11515201a3a1491e67c31f69d97c6425a78e83c38cd189e8fcba20fb57117852cab412a354100b6ea118558f0bd58f4f0b8589b714bac2968e94660014130213011303c02cc02bcca9c030c02fcca800ff01000088002d00020101000b0002010000170000003300260024001d002087fbd30f94ab2932c1b4e42784b29b2cf51960bd3e06274b31e3a94531b91e16000a00080006001d0017001800000010000e00000b746c732e706565742e777300230000002b00050403040303000500050100000000000d00140012050304030807080608050804060105010401",
+  "ja4": "t13d101000_61a7ad8aa9b6_3fcd1a44f3e3",
+  "ja4_r": "t13d101000_00ff,1301,1302,1303,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0017,0023,002b,002d,0033_0503,0403,0807,0806,0805,0804,0601,0501,0401",
+  "fields": {
+    "record_version": "0301",
+    "legacy_version": "0303",
+    "session_id": "fb57117852cab412a354100b6ea118558f0bd58f4f0b8589b714bac2968e9466",
+    "ciphers": [
+      "1302",
+      "1301",
+      "1303",
+      "c02c",
+      "c02b",
+      "cca9",
+      "c030",
+      "c02f",
+      "cca8",
+      "00ff"
+    ],
+    "compressions": [
+      "00"
+    ],
+    "extensions": [
+      {
+        "type": 45,
+        "name": "psk_key_exchange_modes",
+        "len": 2
+      },
+      {
+        "type": 11,
+        "name": "ec_point_formats",
+        "len": 2
+      },
+      {
+        "type": 23,
+        "name": "extended_master_secret",
+        "len": 0
+      },
+      {
+        "type": 51,
+        "name": "key_share",
+        "len": 38
+      },
+      {
+        "type": 10,
+        "name": "supported_groups",
+        "len": 8
+      },
+      {
+        "type": 0,
+        "name": "server_name",
+        "len": 16
+      },
+      {
+        "type": 35,
+        "name": "session_ticket",
+        "len": 0
+      },
+      {
+        "type": 43,
+        "name": "supported_versions",
+        "len": 5
+      },
+      {
+        "type": 5,
+        "name": "status_request",
+        "len": 5
+      },
+      {
+        "type": 13,
+        "name": "signature_algorithms",
+        "len": 20
+      }
+    ],
+    "sni": "tls.peet.ws",
+    "alpn": [],
+    "supported_versions": [
+      "0304",
+      "0303"
+    ],
+    "signature_algorithms": [
+      "0503",
+      "0403",
+      "0807",
+      "0806",
+      "0805",
+      "0804",
+      "0601",
+      "0501",
+      "0401"
+    ],
+    "key_share_groups": [
+      "001d"
+    ],
+    "supported_groups": [
+      "001d",
+      "0017",
+      "0018"
+    ],
+    "psk_modes": [
+      "01"
+    ],
+    "cert_compression": []
+  }
+}

@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 CLIENTS = os.path.join(ROOT, "fixtures", "clients")
 ORACLE = os.path.join(ROOT, "fixtures", "oracle")
-FAMILIES = ["curl-openssl", "node22", "python312"]
+FAMILIES = ["curl-openssl", "node22", "python312", "rustls-baseline"]
 
 
 def load(path):
