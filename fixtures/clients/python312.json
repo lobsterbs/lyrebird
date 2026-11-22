@@ -1,0 +1,162 @@
+{
+  "schema": 1,
+  "tool": "clienthello_peek",
+  "label": "python312",
+  "captured_at": "2026-11-22T19:19:55+00:00",
+  "peer": "127.0.0.1:59716",
+  "raw": "160301060401000600030344600417943f997bbf98f0a0a82938adc2179379b448e51e19f075b589192552200e799afd14d05266250b9aaebecfcb553e5d46b2fee38c6e8c543f051631506c0022130213031301c02cc030c02bc02fcca9cca8c024c028c023c027009f009e006b006701000595ff0100010000000010000e00000b746c732e706565742e7773000b000403000102000a0012001011ec001d0017001e0018001901000101002300000010000e000c02683208687474702f312e310016000000170000000d0036003409050906090404030503060308070808081a081b081c0809080a080b080408050806040105010601030303010302040205020602002b00050403040303002d00020101003304ea04e811ec04c021a4246c62c02019629ea024b8767a1beabe75567b5d33c6d0015092c9a63e503ecc347770c174a3a79123f5a12a37add1d1bf2d705a670295d7f5a582523f5c78682bba120879a2a9e1a3b2c353b232218a018e38ca0b754c4d92c753f3a34b55434e3be11db5350feeab8131e97b9cfccc0c2573f31bcbe17c89910c033647b504165266590a7fa48235c1c43434ab08149f068430cb095ed7369dc97bb84e47c17ab30cb1080ca0e4018128b9755b7a1bd28a151867c2d2979e68cf2bb736bd6c32357755a4daad45f4271ca89f35e7a9d1e5a35dc39558aa4275f85b65caca63dabad2a7ccbbe18d2566be18044998397e657c6b69756449700138076c925a0d3586cf0c605bfc84c3ffe06d1b090f9ec295bc7061cb5c459526a23ea0922205a462f87b6416a4c4a911fed24eae7b5909559b4256acd4aa8a241660cae7cf83116d59d1261124b874b3997837134cc604f2e060a47a4abbbba469939a397233de21bdf1f05765b168263264942ba7e076438601728b33201e430b7e692abba105e6c2868155c4ec6c9febea0872fa420ce09675c857d1499fb3a3ca75657a41c2b1dbfc298108bc7dd39d02c9186dbab54f52062a3bb0ef50c905a338b5b10035660d1eac39b41b0dbc95a76e8131499c0a2c46c6e284264a24429acc615b1b668c766268a361e4c872ca3b67b6c716f01578e012928a740637ab5c16619ab3970572d434d7a074edc661be225c1e2883797c978df15170fc61dd125f165534c9d0a0892c426f1970ecfbce6fda1bb9b030825693a2bccb89c9850931a08d17b993e37b7b7b68512912b055738b9983d1c8a69bcc5c2f1222cd3c13d1d56070db594f59709063340c4ccfb071a234700bfb170d14a63285cb347bfa0de6cc5412072553bac991e81cc5962b4ec28d91c7a18be280d037161f8a00988c42fe28b560134fd9d9b872d30ca47c9abb099dffa35eaa727b7a056368b381a786018836a286c37f6852187d626e61120c1b047346d3924f5b0e14742043442df7e6773d15466252c49c55c78bb54167260ad3a3646c04ba14abcc28b12f2c0646cdd6cd4ad04d266c19b5c41ed16143d0d552e8f91163b558eeca8b7fe81b62380725030d72e08e44d420aec693637a60fdc82fd3c1b01c98c7cfb32bb3b54efa82ba1053ce8cb5cfe0b3724c639888f28ae8dc2561da250478b85fcc808d8498dc86452c63475b6445795863af8c4c89d24df8887490647687688416b703be533a16b34e1bc2af8c71cd02f26707089158007390164d631b27414c9835cb33be3a50c097a296c1c84b392c34d7200ba6caa156ae1c786da6c91f3cfc0ee9315004bb05fcb49b32d1407ac8ce96586897d9842941c85da19e3ed73615c6c618f92d33408fbef0246f20107a7986c8c966803488768a18dc6372599166d4c5bbbd46c36579c8219a710f2a6116e3045b551092372d7be824cb25640f81405d8873e0833c6f686769379a4b362ef5c70108ab9937765a9278c66b94b14e391998e1b1e593bdc2fbc9e6a1a5189a49050a05f6e32b6ddc97cbbc1d1e869979f38a9da9c64a755ec72648e26a8ba47c616dd4334c939189776cdd5b4d411a86490cc07baa73fbbb5132e0eb1dc5f6f412addb42714e5713e92b9571b9e2e91b2cb67bbdfa2e606d2e238b01d84e085f158078176904bacc142184d369ce8adcc1fe55001d00200c205a3b8a646ff2b6f9c0569192b54353fd9649b23b0e9756725d4b4cc17863001b00050400010003",
+  "ja4": "t13d1713h2_ab0a1bf427ad_ecd0401ec68b",
+  "ja4_r": "t13d1713h2_0067,006b,009e,009f,1301,1302,1303,c023,c024,c027,c028,c02b,c02c,c02f,c030,cca8,cca9_000a,000b,000d,0016,0017,001b,0023,002b,002d,0033,ff01_0905,0906,0904,0403,0503,0603,0807,0808,081a,081b,081c,0809,080a,080b,0804,0805,0806,0401,0501,0601,0303,0301,0302,0402,0502,0602",
+  "fields": {
+    "record_version": "0301",
+    "legacy_version": "0303",
+    "session_id": "0e799afd14d05266250b9aaebecfcb553e5d46b2fee38c6e8c543f051631506c",
+    "ciphers": [
+      "1302",
+      "1303",
+      "1301",
+      "c02c",
+      "c030",
+      "c02b",
+      "c02f",
+      "cca9",
+      "cca8",
+      "c024",
+      "c028",
+      "c023",
+      "c027",
+      "009f",
+      "009e",
+      "006b",
+      "0067"
+    ],
+    "compressions": [
+      "00"
+    ],
+    "extensions": [
+      {
+        "type": 65281,
+        "name": "renegotiation_info",
+        "len": 1
+      },
+      {
+        "type": 0,
+        "name": "server_name",
+        "len": 16
+      },
+      {
+        "type": 11,
+        "name": "ec_point_formats",
+        "len": 4
+      },
+      {
+        "type": 10,
+        "name": "supported_groups",
+        "len": 18
+      },
+      {
+        "type": 35,
+        "name": "session_ticket",
+        "len": 0
+      },
+      {
+        "type": 16,
+        "name": "alpn",
+        "len": 14
+      },
+      {
+        "type": 22,
+        "name": "encrypt_then_mac",
+        "len": 0
+      },
+      {
+        "type": 23,
+        "name": "extended_master_secret",
+        "len": 0
+      },
+      {
+        "type": 13,
+        "name": "signature_algorithms",
+        "len": 54
+      },
+      {
+        "type": 43,
+        "name": "supported_versions",
+        "len": 5
+      },
+      {
+        "type": 45,
+        "name": "psk_key_exchange_modes",
+        "len": 2
+      },
+      {
+        "type": 51,
+        "name": "key_share",
+        "len": 1258
+      },
+      {
+        "type": 27,
+        "name": "compress_certificate",
+        "len": 5
+      }
+    ],
+    "sni": "tls.peet.ws",
+    "alpn": [
+      "h2",
+      "http/1.1"
+    ],
+    "supported_versions": [
+      "0304",
+      "0303"
+    ],
+    "signature_algorithms": [
+      "0905",
+      "0906",
+      "0904",
+      "0403",
+      "0503",
+      "0603",
+      "0807",
+      "0808",
+      "081a",
+      "081b",
+      "081c",
+      "0809",
+      "080a",
+      "080b",
+      "0804",
+      "0805",
+      "0806",
+      "0401",
+      "0501",
+      "0601",
+      "0303",
+      "0301",
+      "0302",
+      "0402",
+      "0502",
+      "0602"
+    ],
+    "key_share_groups": [
+      "11ec",
+      "001d"
+    ],
+    "supported_groups": [
+      "11ec",
+      "001d",
+      "0017",
+      "001e",
+      "0018",
+      "0019",
+      "0100",
+      "0101"
+    ],
+    "psk_modes": [
+      "01"
+    ],
+    "cert_compression": [
+      "0001",
+      "0003"
+    ]
+  }
+}
