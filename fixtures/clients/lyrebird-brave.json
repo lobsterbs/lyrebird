@@ -1,0 +1,164 @@
+{
+  "schema": 1,
+  "tool": "clienthello_peek",
+  "label": "client",
+  "captured_at": "2026-11-22T21:39:59+00:00",
+  "peer": "127.0.0.1:55834",
+  "raw": "16030107cc010007c803038e751e895a5f676df9d0a50211da9ca245e05eedf8eb14d8b4c0236faeafbcac20f24d0fd602cee8046c73e713cea7939aa4a56a946598c672bc65aa163b7e6e6c0016eaea130113021303c02bc02fc02cc030cca9cca800ff0100076900000010000e00000b6578616d706c652e636f6d000a000a000811ec001d00170018000b00020100000d001c001a09040905090604030804040105030805050108060601060308070010000e000c02683208687474702f312e3144cd0004010268320012000000170000001b000302000200230000002b000706eaea03040303002d00020101000500050100000000003304ea04e811ec04c0ce4b94a1609ea57414b80a82c47a60a1609f23dbb97c47b0639a2f1362c4edc2c8c7d6c436d15a655b15b6b2520638a0aca5c7a02b85ba396a9718262f5ca9cde16c8cc99353c700e132b8aad2ba1de9965fe1047000a57a781868bbbc41e9926352c1c4ccbac592993764a50d72338a7bc04be06ef4fc1649ec88161759b6205dcb0b51ead4bbbcda4673d46d856324b99854b42cb4716641165707a9364b967a54cc60250d15ad75342e10064832056920c4bc0f1121ab132ebca18fb8164c599a86b27509e2e16d39678272c0201de72c46712222aa2a1db98803646931c759e3ca22e6aa64a8b7b68ab00c428c57bb0b78a0cbb2d981a718e63d77f51d8c6b1cfad84fe902a49015b9869ccb18c0870948990879889371a57548258bac58f7ca47cc679eeaa471ff78a91dd50b90ba3760417e0443276f60addf665f9416793903425603c920673100ca14269c6078a015d62145e04a2dd732433de762bf402e50d9b1ac6c34634670f55732958c465d2c17ae97919645b9f1f9bb209326f88ac048f2c2e5860715f0092400692528cef8da3b6b3c967a69733b281830739c94a5cc3bac6916f17524248bc9b5a4f2394d6d3007eaeb2cb8acbfec068ba893173d3318f9122ce9794d7516970af14929288ea01a8e17a185a7b8b7c0361f73d02c67d72cc75cc8e80343affc742245cbb8bb34132409dff7526782555ad778609596bdb3622d35664e55b3667153bbe91ddc61712968ce377211939c620378705f576c74e150f7b921d2b4594a75b440023332c30c2279685b44b5e2066f077bbc4a08b63299018b330f56ab02ccd847f6a3352f3c33cb86374100cb5403729b47ce53b22aeb314564b7a4f7c9caf9f23f46f39373902f807ba9ea6b01f6ba95fe6a11208366166450eb1b6b93828d911028f4ab0ff1b053757234cf9b3b4e7b7d2d077e16841437311cd63173a07458b92b94a00591424226404c8327f20f9c411dea0657f3092fe21c240ad7893ec35da9895c7a80af26dc4d9f5c8ec9fc94222cc125181d2e154b53903bbb346e76dbc49caa94d7cc381428b382f6b6157a6181e61bf85a849b499579a888c11920bf312e2481b2cacc1d790ac694673111795ba21268b78b24ce36a0319473f2a55b0975c0292b1b27c985595a8879f38bc9d00eda08a97ed6252db12d44b0594a1264343a017c6a332eb1b25576aad9da8b146b3038e38e63087318c6abca203eccb6ccf9d5a36fd7a62182187b733692855844fa38844097e974b00f40afa0f79e5ec68a2ea3b333d7619512874a84978153a54b3091eaf168cfb4362d6a07b1f707248312006566f3acc62a72c6eb197f7566100e703bfb39423cc362c412aa17114cf645a6dbe07f386b6478e6cee6b26888136230e83a0bd4c1916abde1286d40f58f507515847aa2e82b6315c812b8554db8c84e95f79a26e899a2b919341365f5087c0fc81d490929b53b8c11105eec784fe39b6fd4a03bf2d0a7116b93166b06ca04334e460a32617b2b3198456b55141a0d6056b8e20aa9cd370e3ec4bf5cf86c5774bee3d12afaf19ee93a8840d571dcc1b6704a75217a9906422adbf40130623518747589b9a095d651d18d4cc0bab8581b67c94b7c348ced5d5deafcedb7490698fcf6b90e8832a40267514e0f2eb32e9e0108a3ece754b01b1169eb5a166813d9ff626d145b069541001d002067514e0f2eb32e9e0108a3ece754b01b1169eb5a166813d9ff626d145b069541fe0d01db0000010001ed0041041f3c0c98842e05d3883d21d5e4048cb92c3b77a8c8cf16913c62fda29803759a64be3a3a9be85fe9353ebcc76866f2b913dce083e37da6b5b8e7456f1261d1d401908c2cfbb17d077845616512484aa0a7a74d108f9712786d5db7fd1fa4b15858b4d8732115e88ceba9a659ad05ee4fdc9ea789abc6d9b8103088c19c5453bb4ff15174a5be575e56dbc3262b85ca4f025e473adb40aa63608f9001a7ff8edc17717fdffe91aced88609db9b36f483de24a4e628d6284e92c7e56401b0bd7cac4b658d4b3b3f3de99149bc7839367f4a91e81a70a29b00161dc6bc52e01044d6ef92c18ac92a690524074d0261e633d2c9a73f9abae416e1c2715a04c2c00d0eedb8aa0a24312f7e6ea0400e86628cda93a6afa54bba3911560edbb6e73d72e4e41aa0996aaeeaf0e73ddd9878db7b75628cd5cc8958098d4f7e2053044a327a61c5780b29d97a4a2e8d767530336cd641fb5eba7260a558e2955d18d6c863b9b75aa404288f6aaeddb5561e32f40ff7e12c283f9b12de831cb952c5aaaf14c3e6ed3709863e54331a719cd07c54f70c0af3a08010a630e3ef20426c48a8caae6bea9c0eca5c3bff0afcecfbcb9b5a62bfaefe714582b6408126f76a5870bee63ced8faae8f4e4e05ac6761d48b03623278ff010001005a5a0000fafa0000",
+  "ja4": "t13d1016h2_61a7ad8aa9b6_0765652d3d2a",
+  "ja4_r": "t13d1016h2_00ff,1301,1302,1303,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,fe0d,ff01_0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601,0603,0807",
+  "fields": {
+    "record_version": "0301",
+    "legacy_version": "0303",
+    "session_id": "f24d0fd602cee8046c73e713cea7939aa4a56a946598c672bc65aa163b7e6e6c",
+    "ciphers": [
+      "eaea",
+      "1301",
+      "1302",
+      "1303",
+      "c02b",
+      "c02f",
+      "c02c",
+      "c030",
+      "cca9",
+      "cca8",
+      "00ff"
+    ],
+    "compressions": [
+      "00"
+    ],
+    "extensions": [
+      {
+        "type": 0,
+        "name": "server_name",
+        "len": 16
+      },
+      {
+        "type": 10,
+        "name": "supported_groups",
+        "len": 10
+      },
+      {
+        "type": 11,
+        "name": "ec_point_formats",
+        "len": 2
+      },
+      {
+        "type": 13,
+        "name": "signature_algorithms",
+        "len": 28
+      },
+      {
+        "type": 16,
+        "name": "alpn",
+        "len": 14
+      },
+      {
+        "type": 17613,
+        "name": "0x44cd",
+        "len": 4
+      },
+      {
+        "type": 18,
+        "name": "signed_certificate_timestamp",
+        "len": 0
+      },
+      {
+        "type": 23,
+        "name": "extended_master_secret",
+        "len": 0
+      },
+      {
+        "type": 27,
+        "name": "compress_certificate",
+        "len": 3
+      },
+      {
+        "type": 35,
+        "name": "session_ticket",
+        "len": 0
+      },
+      {
+        "type": 43,
+        "name": "supported_versions",
+        "len": 7
+      },
+      {
+        "type": 45,
+        "name": "psk_key_exchange_modes",
+        "len": 2
+      },
+      {
+        "type": 5,
+        "name": "status_request",
+        "len": 5
+      },
+      {
+        "type": 51,
+        "name": "key_share",
+        "len": 1258
+      },
+      {
+        "type": 65037,
+        "name": "0xfe0d",
+        "len": 475
+      },
+      {
+        "type": 65281,
+        "name": "renegotiation_info",
+        "len": 1
+      },
+      {
+        "type": 23130,
+        "name": "0x5a5a",
+        "len": 0
+      },
+      {
+        "type": 64250,
+        "name": "0xfafa",
+        "len": 0
+      }
+    ],
+    "sni": "example.com",
+    "alpn": [
+      "h2",
+      "http/1.1"
+    ],
+    "supported_versions": [
+      "eaea",
+      "0304",
+      "0303"
+    ],
+    "signature_algorithms": [
+      "0904",
+      "0905",
+      "0906",
+      "0403",
+      "0804",
+      "0401",
+      "0503",
+      "0805",
+      "0501",
+      "0806",
+      "0601",
+      "0603",
+      "0807"
+    ],
+    "key_share_groups": [
+      "11ec",
+      "001d"
+    ],
+    "supported_groups": [
+      "11ec",
+      "001d",
+      "0017",
+      "0018"
+    ],
+    "psk_modes": [
+      "01"
+    ],
+    "cert_compression": [
+      "0002"
+    ]
+  }
+}

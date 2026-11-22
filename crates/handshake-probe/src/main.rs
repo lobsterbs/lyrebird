@@ -79,11 +79,15 @@ impl ServerCertVerifier for NoVerify {
 
 static GREASE_PROFILE: rustls::ClientHelloProfile = rustls::ClientHelloProfile {
     grease: true,
-    // Bookends only. Order data lands when a pinned real-client capture
-    // exists; no order is claimed without one.
+    // Historical v0.2 GREASE shape: one leading GREASE extension, zero
+    // trailing bookends, cipher/sig/group order left to rustls.
     cipher_suites: &[],
     signature_schemes: &[],
     named_groups: &[],
+    extension_order: &[0x0a0a],
+    extensions: &[],
+    grease_extension_tail: 0,
+    ech_grease: false,
 };
 
 fn build_config(
@@ -181,7 +185,18 @@ fn main() {
         }
     };
 
-    let config = build_config(insecure, profile, aws);
+    let mut config = build_config(insecure, profile, aws);
+    match mode {
+        "brave-live" | "brave-local" => {
+            config.alpn_protocols = profiles::alpn();
+            config.cert_decompressors = profiles::cert_decompressors(profiles::BRAVE_COMPRESSION);
+        }
+        "firefox-live" | "firefox-local" => {
+            config.alpn_protocols = profiles::alpn();
+            config.cert_decompressors = profiles::cert_decompressors(profiles::FIREFOX_COMPRESSION);
+        }
+        _ => {}
+    }
     let name = ServerName::try_from(sni.clone()).expect("server name");
     let mut conn =
         rustls::ClientConnection::new(Arc::new(config), name).expect("client connection");

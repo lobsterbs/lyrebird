@@ -97,6 +97,34 @@ compress_certificate, no ECH offer). [#5](../../issues/5) keeps the
 Firefox-specific remainder and [#6](../../issues/6) the EpoxyIdentity seam
 and parity gate.
 
+The extension layer landed next, on 2026-11-22: the probe's profiles
+grew a pinned extension order, verbatim static extensions, trailing
+GREASE bookends, and a native GREASE-ECH offer, all capture-derived
+(`0002-clienthello-browser-profiles.patch`). Two wire corrections came
+out of reading the captures instead of the RFC: the leading GREASE
+extension is gone (captured browsers keep GREASE at the tail; the old
+leading slot went away along with a double-encoding bug in the first
+GREASE patch), and the pinned order is also the set contract: native
+extensions the captured hello does not carry are dropped, so Firefox
+sends no session_ticket and Brave carries ALPS (0x44cd as peet printed
+it), SCT, EMS, compress_certificate (brotli for Brave, zlib+brotli for
+Firefox), and renego exactly where the captures put them, with both
+wires proven byte-order-exact against the harness and live-verified
+HTTP 200 against tls.peet.ws (extension count parity with real Brave:
+16 plus two trailing GREASE; the peet oracle renders the same order and
+JA4 as our own captures, committed as the `lyrebird-brave` /
+`lyrebird-firefox` fixture families). The h2 shape joined as data too:
+`tools/capture/h2shapes.py` pins both browsers' SETTINGS payloads,
+WINDOW_UPDATE values, and pseudo-header orders, gated by the akamai
+fingerprint hashes (md5 of the fingerprint string, preimage proven).
+Honest gaps: Firefox's captured pre_shared_key is not emitted because
+honest session state does not exist and an empty offer was proven
+rejected by a live server (unexpected_message; extension count 16 vs
+the capture's 17), Firefox-only 0203/0201 signature schemes are not
+offerable, the provider still offers 9 of the browsers' 15 cipher suites
+plus the rustls 00ff SCSV artifact, and Firefox's zstd compression
+algorithm has no rustls decompressor.
+
 ## Known constraints
 
 - BoringSSL does not build to wasm32, so byte parity comes from patched rustls

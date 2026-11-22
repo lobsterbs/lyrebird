@@ -20,6 +20,10 @@ jobs:
         run: python3 -m unittest test_clienthello.py
         working-directory: tools/capture
 
+      - name: h2 shape tests (offline)
+        run: python3 -m unittest test_h2shapes.py
+        working-directory: tools/capture
+
       - name: native check (rustls, ring provider)
         run: cargo check -p rustls --no-default-features --features std,ring,tls12
         working-directory: vendor/rustls

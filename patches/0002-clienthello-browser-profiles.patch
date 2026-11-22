@@ -1,0 +1,249 @@
+diff -ruN a/rustls/src/client/client_hello_profile.rs b/rustls/src/client/client_hello_profile.rs
+--- a/rustls/src/client/client_hello_profile.rs	2026-10-13 11:15:01.000000000 +0000
++++ b/rustls/src/client/client_hello_profile.rs	2026-11-22 22:00:00.000000000 +0000
+@@ -13,6 +13,8 @@
+ /// * The order slices are preference lists: listed entries move to the
+ ///   front in the given order; everything else keeps its native order.
+ ///   An empty list keeps the native order untouched.
++/// * `extension_order` pins the full extension order (wire type ids); an
++///   empty slice keeps rustls's native per-connection shuffle.
+ #[derive(Debug)]
+ pub struct ClientHelloProfile {
+     /// Emit GREASE bookends (RFC 8701).
+@@ -23,6 +25,32 @@
+     pub signature_schemes: &'static [SignatureScheme],
+     /// Preference order for key exchange groups.
+     pub named_groups: &'static [NamedGroup],
++    /// Full extension order as wire type ids (lyrebird). The leading
++    /// GREASE extension is `0x0a0a`; listed types emit in this order,
++    /// anything the config still emits but this list omits follows in
++    /// native order.
++    pub extension_order: &'static [u16],
++    /// Extensions the crypto provider cannot generate, emitted verbatim
++    /// from the capture (lyrebird).
++    pub extensions: &'static [ProfileStaticExtension],
++    /// How many trailing GREASE extensions to append (RFC 8701 flavor of
++    /// the captured client). Random `?a?a` types, empty bodies.
++    pub grease_extension_tail: usize,
++    /// Offer GREASE ECH (draft-ietf-tls-esni). Real payload, random per
++    /// connection, HPKE from the aws-lc-rs provider.
++    pub ech_grease: bool,
++}
++
++/// A wire-frozen extension emitted verbatim from a capture (lyrebird).
++///
++/// No semantic is attached: the connection never acts on these beyond
++/// offering them. Bodies are the captured bytes.
++#[derive(Debug)]
++pub struct ProfileStaticExtension {
++    /// Wire extension type.
++    pub ext_type: u16,
++    /// Wire extension body, verbatim capture bytes.
++    pub body: &'static [u8],
+ }
+ 
+ /// Reorder `offered` so entries named in `preference` come first, in the
+
+diff -ruN a/rustls/src/client/hs.rs b/rustls/src/client/hs.rs
+--- a/rustls/src/client/hs.rs	2026-10-13 11:15:01.000000000 +0000
++++ b/rustls/src/client/hs.rs	2026-11-22 22:00:00.000000000 +0000
+@@ -390,7 +390,12 @@
+             if let Some(sv) = &mut exts.supported_versions {
+                 sv.grease = Some(ProtocolVersion::Unknown(grease_value));
+             }
+-            exts.grease_extension = Some(PayloadU16::empty());
++            // The leading GREASE extension is capture-driven, not implied by
++            // RFC 8701: captured browsers keep all GREASE extensions at the
++            // tail. Emit it only when the profile's order slice asks for it.
++            if profile.extension_order.contains(&0x0a0a) {
++                exts.grease_extension = Some(PayloadU16::empty());
++            }
+         }
+         if let Some(groups) = &mut exts.named_groups {
+             *groups = crate::client::client_hello_profile::reorder_by_preference(
+@@ -403,6 +408,27 @@
+                 core::mem::take(schemes),
+                 profile.signature_schemes,
+             );
++        }
++
++        // lyrebird: extension layer. Pinned order plus verbatim static
++        // extensions from the capture, then trailing GREASE bookends.
++        exts.profile_order = Some(profile.extension_order);
++        for ext in profile.extensions {
++            exts.profile_static_extensions
++                .push((ext.ext_type, PayloadU16::new(ext.body.to_vec())));
++        }
++        if profile.grease {
++            let mut used = vec![grease_seed];
++            for i in 0..profile.grease_extension_tail {
++                let mut nib = u16::from(input.random.0[1 + i]) & 0x0f;
++                while used.contains(&nib) {
++                    nib = (nib + 1) & 0x0f;
++                }
++                used.push(nib);
++                let grease_type = 0x0a0a + nib * 0x1010;
++                exts.profile_static_extensions
++                    .push((grease_type, PayloadU16::empty()));
++            }
+         }
+     }
+ 
+@@ -440,17 +466,41 @@
+         extensions: exts,
+     };
+ 
+-    let ech_grease_ext = config
+-        .ech_mode
+-        .as_ref()
+-        .and_then(|mode| match mode {
+-            EchMode::Grease(cfg) => Some(cfg.grease_ext(
++    // lyrebird: profile-driven GREASE ECH. The upstream with_ech() builder
++    // pins TLS 1.3 as the only version, which no captured browser does; the
++    // profile carries the want instead, and the provider supplies HPKE.
++    #[cfg(feature = "aws-lc-rs")]
++    let profile_ech_grease = profile.filter(|p| p.ech_grease).and_then(|_| {
++        let suite = crate::crypto::aws_lc_rs::hpke::DH_KEM_P256_HKDF_SHA256_AES_128;
++        let skxg = config
++            .provider
++            .kx_groups
++            .iter()
++            .find(|skxg| skxg.name() == crate::NamedGroup::secp256r1)?;
++        let placeholder = skxg.start().ok()?;
++        Some(crate::client::ech::EchGreaseConfig::new(
++            suite,
++            crate::crypto::hpke::HpkePublicKey(placeholder.pub_key().to_vec()),
++        ))
++    });
++    #[cfg(not(feature = "aws-lc-rs"))]
++    let profile_ech_grease: Option<crate::client::ech::EchGreaseConfig> = None;
++
++    let ech_grease_ext = match config.ech_mode.as_ref() {
++        Some(EchMode::Grease(cfg)) => Some(cfg.grease_ext(
++            config.provider.secure_random,
++            input.server_name.clone(),
++            &chp_payload,
++        )),
++        Some(_) => None,
++        None => profile_ech_grease.as_ref().map(|cfg| {
++            cfg.grease_ext(
+                 config.provider.secure_random,
+                 input.server_name.clone(),
+                 &chp_payload,
+-            )),
+-            _ => None,
+-        });
++            )
++        }),
++    };
+ 
+     match (cx.data.ech_status, &mut ech_state) {
+         // If we haven't offered ECH, or have offered ECH but got a non-rejecting HRR, then
+
+diff -ruN a/rustls/src/msgs/handshake.rs b/rustls/src/msgs/handshake.rs
+--- a/rustls/src/msgs/handshake.rs	2026-10-13 11:15:01.000000000 +0000
++++ b/rustls/src/msgs/handshake.rs	2026-11-22 22:00:00.000000000 +0000
+@@ -991,6 +991,14 @@
+ 
+         /// Extensions that must appear contiguously.
+         pub(crate) contiguous_extensions: Vec<ExtensionType>,
++
++        /// lyrebird: profile-provided static extensions (wire type, body).
++        /// Emitted verbatim; the profile's order list places them.
++        pub(crate) profile_static_extensions: Vec<(u16, PayloadU16)>,
++
++        /// lyrebird: profile-driven extension order, as wire type ids.
++        /// None keeps rustls's native random order.
++        pub(crate) profile_order: Option<&'static [u16]>,
+     }
+ }
+ 
+@@ -1024,6 +1032,8 @@
+             encrypted_client_hello_outer,
+             order_seed,
+             contiguous_extensions,
++            profile_static_extensions,
++            profile_order,
+         } = self;
+         ClientExtensions {
+             server_name: server_name.map(|x| x.into_owned()),
+@@ -1053,6 +1063,8 @@
+             encrypted_client_hello_outer,
+             order_seed,
+             contiguous_extensions,
++            profile_static_extensions,
++            profile_order,
+         }
+     }
+ 
+@@ -1075,6 +1087,47 @@
+         }
+         if self.preshared_key_offer.is_some() {
+             exts.push(ExtensionType::PreSharedKey);
++        }
++
++        // lyrebird: profile-provided static extensions join the set.
++        if !self.profile_static_extensions.is_empty() {
++            exts.extend(
++                self.profile_static_extensions
++                    .iter()
++                    .map(|(t, _)| ExtensionType::Unknown(*t)),
++            );
++        }
++
++        // lyrebird: the profile's order slice is also the set contract:
++        // native extensions it does not list are dropped, so the wire set
++        // matches the captured client exactly. GREASE stays exempt: RFC
++        // 8701 values vary per run and never appear in the order slice.
++        // Unknown() entries are profile statics; they are all listed in
++        // the order by construction, so they pass the same test.
++        if let Some(order) = self.profile_order {
++            exts.retain(|et| {
++                let wire = u16::from(*et);
++                (wire & 0x0f0f) == 0x0a0a || order.contains(&wire)
++            });
++        }
++
++        // lyrebird: when the profile pins the extension order, listed wire
++        // types come in that order; unlisted emitted extensions keep their
++        // native relative order after them.
++        if let Some(order) = self.profile_order {
++            let key = |et: &ExtensionType, native: usize| -> usize {
++                match order.iter().position(|&w| w == u16::from(*et)) {
++                    Some(p) => p,
++                    None => order.len() + native,
++                }
++            };
++            let mut keyed: Vec<(usize, &ExtensionType)> = exts
++                .iter()
++                .enumerate()
++                .map(|(i, et)| (key(et, i), et))
++                .collect();
++            keyed.sort_by_key(|(k, _)| *k);
++            exts = keyed.into_iter().map(|(_, et)| *et).collect();
+         }
+         exts
+     }
+@@ -1128,7 +1181,20 @@
+ 
+         let body = LengthPrefixedBuffer::new(ListLength::U16, bytes);
+         for item in order {
+-            self.encode_one(item, body.buf);
++            match item {
++                // lyrebird: profile-injected static extension, verbatim body.
++                ExtensionType::Unknown(want) => {
++                    if let Some((typ, payload)) = self
++                        .profile_static_extensions
++                        .iter()
++                        .find(|(t, _)| *t == want)
++                    {
++                        ExtensionType::Unknown(*typ).encode(body.buf);
++                        payload.encode(body.buf);
++                    }
++                }
++                _ => self.encode_one(item, body.buf),
++            }
+         }
+     }
+ 
+

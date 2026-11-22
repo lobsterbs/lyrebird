@@ -1,6 +1,6 @@
 diff -ruN a/rustls/src/client/builder.rs b/rustls/src/client/builder.rs
 --- a/rustls/src/client/builder.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/client/builder.rs	2026-11-22 20:19:17.415717263 +0000
++++ b/rustls/src/client/builder.rs	2026-11-22 22:00:00.000000000 +0000
 @@ -186,6 +186,7 @@
              cert_decompressors: compress::default_cert_decompressors().to_vec(),
              ech_mode: self.state.client_ech_mode,
@@ -9,9 +9,10 @@ diff -ruN a/rustls/src/client/builder.rs b/rustls/src/client/builder.rs
          }
      }
  }
+
 diff -ruN a/rustls/src/client/client_conn.rs b/rustls/src/client/client_conn.rs
 --- a/rustls/src/client/client_conn.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/client/client_conn.rs	2026-11-22 20:19:17.415717263 +0000
++++ b/rustls/src/client/client_conn.rs	2026-11-22 22:00:00.000000000 +0000
 @@ -294,6 +294,10 @@
      ///
      /// [RFC 9149]: https://datatracker.ietf.org/doc/html/rfc9149
@@ -39,9 +40,10 @@ diff -ruN a/rustls/src/client/client_conn.rs b/rustls/src/client/client_conn.rs
      /// Create a builder for a client configuration with
      /// [the process-default `CryptoProvider`][CryptoProvider#using-the-per-process-default-cryptoprovider]
      /// and safe protocol version defaults.
+
 diff -ruN a/rustls/src/client/client_hello_profile.rs b/rustls/src/client/client_hello_profile.rs
 --- a/rustls/src/client/client_hello_profile.rs	1970-01-01 00:00:00.000000000 +0000
-+++ b/rustls/src/client/client_hello_profile.rs	2026-11-22 20:19:17.414717263 +0000
++++ b/rustls/src/client/client_hello_profile.rs	2026-11-22 22:00:00.000000000 +0000
 @@ -0,0 +1,47 @@
 +//! lyrebird: data-driven ClientHello shaping.
 +//!
@@ -90,9 +92,10 @@ diff -ruN a/rustls/src/client/client_hello_profile.rs b/rustls/src/client/client
 +    out.append(&mut offered);
 +    out
 +}
+
 diff -ruN a/rustls/src/client/hs.rs b/rustls/src/client/hs.rs
 --- a/rustls/src/client/hs.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/client/hs.rs	2026-11-22 20:19:17.417717263 +0000
++++ b/rustls/src/client/hs.rs	2026-11-22 22:00:00.000000000 +0000
 @@ -26,7 +26,7 @@
  use crate::error::{Error, PeerIncompatible, PeerMisbehaved};
  use crate::hash_hs::HandshakeHashBuffer;
@@ -144,10 +147,11 @@ diff -ruN a/rustls/src/client/hs.rs b/rustls/src/client/hs.rs
      let mut cipher_suites: Vec<_> = config
          .provider
          .cipher_suites
-@@ -388,6 +416,16 @@
+@@ -387,6 +415,16 @@
+             false => None,
          })
          .collect();
- 
++
 +    if let Some(profile) = profile {
 +        cipher_suites = crate::client::client_hello_profile::reorder_by_preference(
 +            cipher_suites,
@@ -157,13 +161,13 @@ diff -ruN a/rustls/src/client/hs.rs b/rustls/src/client/hs.rs
 +            cipher_suites.insert(0, CipherSuite::Unknown(0x0a0a + grease_seed * 0x1010));
 +        }
 +    }
-+
+ 
      if supported_versions.tls12 {
          // We don't do renegotiation at all, in fact.
-         cipher_suites.push(CipherSuite::TLS_EMPTY_RENEGOTIATION_INFO_SCSV);
+
 diff -ruN a/rustls/src/lib.rs b/rustls/src/lib.rs
 --- a/rustls/src/lib.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/lib.rs	2026-11-22 20:19:17.440717263 +0000
++++ b/rustls/src/lib.rs	2026-11-22 22:00:00.000000000 +0000
 @@ -582,6 +582,7 @@
  pub mod client {
      pub(super) mod builder;
@@ -188,9 +192,10 @@ diff -ruN a/rustls/src/lib.rs b/rustls/src/lib.rs
  #[cfg(feature = "std")]
  pub use client::ClientConnection;
  
+
 diff -ruN a/rustls/src/msgs/enums.rs b/rustls/src/msgs/enums.rs
 --- a/rustls/src/msgs/enums.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/msgs/enums.rs	2026-11-22 20:19:17.450717263 +0000
++++ b/rustls/src/msgs/enums.rs	2026-11-22 22:00:00.000000000 +0000
 @@ -147,6 +147,8 @@
          TransportParametersDraft => 0xffa5,
          EncryptedClientHello => 0xfe0d, // https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-18#section-11.1
@@ -200,9 +205,10 @@ diff -ruN a/rustls/src/msgs/enums.rs b/rustls/src/msgs/enums.rs
      }
  }
  
+
 diff -ruN a/rustls/src/msgs/handshake.rs b/rustls/src/msgs/handshake.rs
 --- a/rustls/src/msgs/handshake.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/msgs/handshake.rs	2026-11-22 20:19:17.451717263 +0000
++++ b/rustls/src/msgs/handshake.rs	2026-11-22 22:00:00.000000000 +0000
 @@ -698,6 +698,8 @@
  pub(crate) struct SupportedProtocolVersions {
      pub(crate) tls13: bool,
@@ -273,3 +279,15 @@ diff -ruN a/rustls/src/msgs/handshake.rs b/rustls/src/msgs/handshake.rs
          if self
              .encrypted_client_hello_outer
              .is_some()
+@@ -1083,6 +1102,10 @@
+                 ExtensionType::PreSharedKey
+                     | ExtensionType::EncryptedClientHello
+                     | ExtensionType::EncryptedClientHelloOuterExtensions
++                    // lyrebird: the GREASE extension is placed at index 0
++                    // by used_extensions_in_encoding_order(); if it also
++                    // stays in collect_used() it gets encoded twice.
++                    | ExtensionType::GreaseExtension
+             ) || self.contiguous_extensions.contains(ext))
+         });
+ 
+

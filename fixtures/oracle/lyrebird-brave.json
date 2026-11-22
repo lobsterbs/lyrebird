@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "source": "tls.peet.ws /api/all (server-side view of lyrebird's own handshake-probe brave-live mode: pinned rustls v/0.23.46, aws-lc provider, Brave browser order profile from the 2026-11-22 capture)",
+  "captured_at": "2026-11-22T22:40:00+00:00",
+  "user_agent": "lyrebird-probe/0.4",
+  "ja4": "t13d1016h2_61a7ad8aa9b6_0765652d3d2a",
+  "ja4_r": "t13d1016h2_00ff,1301,1302,1303,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,fe0d,ff01_0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601,0603,0807",
+  "alpn_offered": ["h2", "http/1.1"],
+  "note": "Brave profile live acceptance: HTTP 200 against real WebPKI roots. peet rendered the hello as 'TLS_GREASE (0x8A8A)' leading cipher, GREASE first group, X25519MLKEM768, extension order server_name..extensionRenegotiationInfo followed by two 'TLS_GREASE' tail extensions, application_settings (17613) and extensionEncryptedClientHello present. Known honest gaps vs the real capture: cipher set offerable is 9 suites of the browser's 15 plus the rustls 00ff SCSV artifact, and signature schemes carry the aws-lc leftovers 0603/0807 that browsers do not offer."
+}

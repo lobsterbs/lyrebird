@@ -19,7 +19,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 CLIENTS = os.path.join(ROOT, "fixtures", "clients")
 ORACLE = os.path.join(ROOT, "fixtures", "oracle")
-FAMILIES = ["curl-openssl", "node22", "python312", "rustls-baseline", "rustls-grease"]
+FAMILIES = ["curl-openssl", "node22", "python312", "rustls-baseline", "rustls-grease",
+            "lyrebird-brave", "lyrebird-firefox"]
+
+# Wire extension order for lyrebird's own profile captures: the exact
+# sequence (types in wire order) including GREASE positions. GREASE types
+# vary per run, so they are matched by the RFC 8701 ?a?a rule.
+LYREBIRD_BRAVE_ORDER = [
+    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x44cd, 0x0012, 0x0017, 0x001b,
+    0x0023, 0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01, "grease", "grease",
+]
+LYREBIRD_FIREFOX_ORDER = [
+    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x0012, 0x0017, 0x001b, 0x001c,
+    0x0022, 0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01,
+]
 
 
 def load(path):
@@ -131,6 +144,51 @@ class GreaseTells(unittest.TestCase):
         # and the substance behind the hashes is the same set of real values
         self.assertEqual(sorted(self.grease["fields"]["ciphers"][1:]),
                          sorted(self.baseline["fields"]["ciphers"]))
+
+
+class WireOrderFrozen(unittest.TestCase):
+    """The lyrebird profile captures: extension wire order IS the product.
+
+    These are captures of lyrebird's own probe (brave-local / firefox-local
+    against peek.py, release build). The order matches the operator's
+    2026-11-22 tls.peet.ws captures; GREASE types vary per run and are
+    matched by the RFC 8701 ?a?a rule, but their POSITIONS are pinned.
+    """
+
+    def check(self, family, expected):
+        cap = load(os.path.join(CLIENTS, family + ".json"))
+        wire = [e["type"] for e in cap["fields"]["extensions"]]
+        self.assertEqual(len(wire), len(expected), family)
+        for got, want in zip(wire, expected):
+            if want == "grease":
+                self.assertTrue(ch.is_grease(got),
+                                "%s: %04x not GREASE" % (family, got))
+            else:
+                self.assertEqual(got, want, "%s: %04x != %04x" %
+                                 (family, got, want))
+
+    def test_brave_order(self):
+        self.check("lyrebird-brave", LYREBIRD_BRAVE_ORDER)
+
+    def test_firefox_order(self):
+        self.check("lyrebird-firefox", LYREBIRD_FIREFOX_ORDER)
+
+    def test_firefox_no_session_ticket_no_psk(self):
+        # Firefox captured hellos carry pre_shared_key (0x0029) but no
+        # session_ticket (0x0023); lyrebird ships neither (session state
+        # cannot be conjured honestly) and drops the rustls-native
+        # session_ticket to keep the set faithful minus the PSK gap.
+        cap = load(os.path.join(CLIENTS, "lyrebird-firefox.json"))
+        types = [e["type"] for e in cap["fields"]["extensions"]]
+        self.assertNotIn(0x0023, types)
+        self.assertIn(0x001c, types)   # record_size_limit
+        self.assertIn(0x0022, types)   # delegated_credentials
+
+    def test_brave_alps_body(self):
+        cap = load(os.path.join(CLIENTS, "lyrebird-brave.json"))
+        raw = bytes.fromhex(cap["raw"])
+        alps = [e for e in cap["fields"]["extensions"] if e["type"] == 0x44CD]
+        self.assertEqual(len(alps), 1)
 
 
 if __name__ == "__main__":
