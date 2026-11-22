@@ -10,6 +10,15 @@
 //!   probe grease-local <sni-host> <port>
 //!                                     same as live/local, with the GREASE
 //!                                     profile (bookends only, native orders)
+//!   probe brave-live <host> <port> <path>
+//!   probe brave-local <sni-host> <port>
+//!                                     Brave/Chromium 158 order profile
+//!                                     (GREASE + captured orders), aws-lc
+//!                                     provider (X25519MLKEM768 first group)
+//!   probe firefox-live <host> <port> <path>
+//!   probe firefox-local <sni-host> <port>
+//!                                     Firefox 160 order profile, no GREASE,
+//!                                     aws-lc provider
 //!
 //! No ALPN is offered and no session resumption is used, so both modes send a
 //! byte-similar ClientHello (only the SNI value varies).
@@ -21,9 +30,11 @@ use std::sync::Arc;
 use rustls_pki_types::ServerName;
 
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
-use rustls::crypto::ring as rcrypto;
+use rustls::ClientHelloProfile;
 use rustls::DigitallySignedStruct;
 use rustls::RootCertStore;
+
+mod profiles;
 
 #[derive(Debug)]
 struct NoVerify(Arc<rustls::client::WebPkiServerVerifier>);
@@ -75,17 +86,32 @@ static GREASE_PROFILE: rustls::ClientHelloProfile = rustls::ClientHelloProfile {
     named_groups: &[],
 };
 
-fn build_config(insecure: bool, grease: bool) -> rustls::ClientConfig {
-    let provider = Arc::new(rcrypto::default_provider());
+fn build_config(
+    insecure: bool,
+    profile: Option<&'static ClientHelloProfile>,
+    aws: bool,
+) -> rustls::ClientConfig {
+    let provider = if aws {
+        Arc::new(rustls::crypto::aws_lc_rs::default_provider())
+    } else {
+        Arc::new(rustls::crypto::ring::default_provider())
+    };
+    // The inner verifier feeds supported_verify_schemes(), which builds the
+    // ClientHello signature_algorithms: it must carry the SAME provider as
+    // the config, or the capture would advertise the wrong scheme list.
+    let verifier_provider = provider.clone();
     let builder = rustls::ClientConfig::builder_with_provider(provider)
         .with_protocol_versions(&[&rustls::version::TLS13, &rustls::version::TLS12])
         .expect("protocol versions");
     let config = if insecure {
         let mut roots = RootCertStore::empty();
         roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
-        let inner = rustls::client::WebPkiServerVerifier::builder(Arc::new(roots))
-            .build()
-            .expect("webpki verifier");
+        let inner = rustls::client::WebPkiServerVerifier::builder_with_provider(
+            Arc::new(roots),
+            verifier_provider,
+        )
+        .build()
+        .expect("webpki verifier");
         builder
             .dangerous()
             .with_custom_certificate_verifier(Arc::new(NoVerify(inner)))
@@ -98,10 +124,9 @@ fn build_config(insecure: bool, grease: bool) -> rustls::ClientConfig {
             .with_no_client_auth()
     };
 
-    if grease {
-        config.with_client_hello_profile(&GREASE_PROFILE)
-    } else {
-        config
+    match profile {
+        Some(p) => config.with_client_hello_profile(p),
+        None => config,
     }
 }
 
@@ -109,33 +134,46 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 4 {
         eprintln!(
-            "usage: probe live <host> <port> <path>\n       probe local <sni-host> <port>\n       probe grease-live <host> <port> <path>\n       probe grease-local <sni-host> <port>"
+            "usage: probe live <host> <port> <path>\n       probe local <sni-host> <port>\n       probe grease-live <host> <port> <path>\n       probe grease-local <sni-host> <port>\n       probe brave-live <host> <port> <path>\n       probe brave-local <sni-host> <port>\n       probe firefox-live <host> <port> <path>\n       probe firefox-local <sni-host> <port>"
         );
         std::process::exit(2);
     }
     let mode = args[1].as_str();
-    let (sni, addr, insecure, path, grease) = match mode {
+    let (sni, addr, insecure, path, profile, aws) = match mode {
         "live" => {
             let host = args[2].clone();
             let port = args[3].clone();
             let p = args.get(4).cloned().unwrap_or_else(|| "/".to_string());
-            (host, format!("{}:{}", args[2], port), false, Some(p), false)
+            (host, format!("{}:{}", args[2], port), false, Some(p), None::<&'static ClientHelloProfile>, false)
         }
         "grease-live" => {
             let host = args[2].clone();
             let port = args[3].clone();
             let p = args.get(4).cloned().unwrap_or_else(|| "/".to_string());
-            (host, format!("{}:{}", args[2], port), false, Some(p), true)
+            (host, format!("{}:{}", args[2], port), false, Some(p), Some(&GREASE_PROFILE), false)
+        }
+        "brave-live" | "firefox-live" => {
+            let host = args[2].clone();
+            let port = args[3].clone();
+            let p = args.get(4).cloned().unwrap_or_else(|| "/".to_string());
+            let prof = if mode == "brave-live" { profiles::brave() } else { profiles::firefox() };
+            (host, format!("{}:{}", args[2], port), false, Some(p), Some(prof), true)
         }
         "local" => {
             let sni_host = args[2].clone();
             let port = args[3].clone();
-            (sni_host, format!("127.0.0.1:{}", port), true, None, false)
+            (sni_host, format!("127.0.0.1:{}", port), true, None, None::<&'static ClientHelloProfile>, false)
         }
         "grease-local" => {
             let sni_host = args[2].clone();
             let port = args[3].clone();
-            (sni_host, format!("127.0.0.1:{}", port), true, None, true)
+            (sni_host, format!("127.0.0.1:{}", port), true, None, Some(&GREASE_PROFILE), false)
+        }
+        "brave-local" | "firefox-local" => {
+            let sni_host = args[2].clone();
+            let port = args[3].clone();
+            let prof = if mode == "brave-local" { profiles::brave() } else { profiles::firefox() };
+            (sni_host, format!("127.0.0.1:{}", port), true, None, Some(prof), true)
         }
         other => {
             eprintln!("unknown mode {}", other);
@@ -143,7 +181,7 @@ fn main() {
         }
     };
 
-    let config = build_config(insecure, grease);
+    let config = build_config(insecure, profile, aws);
     let name = ServerName::try_from(sni.clone()).expect("server name");
     let mut conn =
         rustls::ClientConnection::new(Arc::new(config), name).expect("client connection");

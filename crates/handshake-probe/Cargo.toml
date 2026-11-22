@@ -5,6 +5,6 @@ edition = "2021"
 publish = false
 
 [dependencies]
-rustls = { path = "../../vendor/rustls/rustls", default-features = false, features = ["std", "ring", "tls12", "logging"] }
+rustls = { path = "../../vendor/rustls/rustls", default-features = false, features = ["std", "ring", "tls12", "logging", "aws-lc-rs", "prefer-post-quantum"] }
 rustls-pki-types = { version = "1", features = ["std"] }
 webpki-roots = "0.26"

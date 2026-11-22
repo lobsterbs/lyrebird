@@ -77,9 +77,25 @@ first extension, and first supported version on the wire, live-verified
 against tls.peet.ws, with JA4 unchanged from the baseline
 (`t13d101000_61a7ad8aa9b6_3fcd1a44f3e3`). No order is claimed from memory:
 profile order data lands only when pinned captures of real browsers exist.
-Next on the roadmap: [#4](../../issues/4) browser order data and Chrome
-advanced tells, [#5](../../issues/5) the Firefox profile, [#6](../../issues/6)
-the EpoxyIdentity seam and parity gate.
+The first real order data landed on 2026-11-22: tls.peet.ws captures of
+Brave (Chromium 158) and Firefox 160 on Windows supplied the wire order
+slices for cipher suites, signature algorithms, and named groups. The raw
+capture JSONs stay out of the repo by the operator's choice; the derived
+order slices ship as code in the probe
+(`crates/handshake-probe/src/profiles.rs`, frozen by unit tests) and drive
+new `brave-*` / `firefox-*` probe modes on the aws-lc-rs provider, which
+puts X25519MLKEM768 first in supported_groups. Local captures against the
+harness prove exact wire-order parity for every value the provider offers
+(Brave: GREASE bookends then `1301,1302,1303,c02b,c02f,c02c,c030,cca9,cca8`;
+Firefox: `1301,1303,1302,c02b,c02f,cca9,cca8,c02c,c030`, no GREASE), and
+both live modes handshake HTTP 200 against tls.peet.ws with the MLKEM
+key share first. Honest gaps remain, all tracked in [#4](../../issues/4):
+the provider offers 9 suites where the browsers offer 15, rustls appends
+the SCSV and a few aws-lc verifier schemes the browsers do not list, and
+the extension set and its order are still rustls-native (no ALPS, no
+compress_certificate, no ECH offer). [#5](../../issues/5) keeps the
+Firefox-specific remainder and [#6](../../issues/6) the EpoxyIdentity seam
+and parity gate.
 
 ## Known constraints
 
