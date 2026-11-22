@@ -9,6 +9,7 @@ encoder against an independent implementation.
 import hashlib
 import json
 import os
+import re
 import sys
 import unittest
 
@@ -40,14 +41,42 @@ def load(path):
         return json.load(f)
 
 
+def ja4_head_parses(ja4):
+    """All structurally valid count-splits of a ja4 head.
+
+    peek prints the JA4-spec zero-padded cipher count ("t13d0916h2"),
+    peet prints the same wire without padding ("t13d916h2"). The counts
+    are ambiguous digits, so return every valid split and let callers
+    test set intersection instead of string equality.
+    """
+    head = ja4.split("_", 2)[0]
+    m = re.match(r"^(t\d{2}[doq])", head)
+    assert m, head
+    body = head[m.end():]
+    alpn = body[-2:]
+    digits = body[:-2]
+    out = set()
+    for i in range(1, len(digits)):
+        c, e = digits[:i], digits[i:]
+        if len(c) <= 2 and len(e) <= 2:
+            out.add((m.group(1), int(c), int(e), alpn))
+    return out
+
+
 class OracleParity(unittest.TestCase):
     def test_local_capture_matches_peet_oracle(self):
         for name in FAMILIES:
             with self.subTest(family=name):
                 local = load(os.path.join(CLIENTS, name + ".json"))
                 oracle = load(os.path.join(ORACLE, name + ".json"))
-                self.assertEqual(local["ja4"], oracle["ja4"],
-                                 "peek ja4 diverged from the peet oracle for " + name)
+                # hash segments are never ambiguous: strict equality
+                self.assertEqual(local["ja4"].split("_")[1:], oracle["ja4"].split("_")[1:],
+                                 "peek ja4 hashes diverged from the peet oracle for " + name)
+                # head counts: peet drops JA4 zero padding on single-digit
+                # counts, so compare the set of valid parses
+                self.assertTrue(ja4_head_parses(local["ja4"]) & ja4_head_parses(oracle["ja4"]),
+                                "peek ja4 head %s incompatible with peet oracle %s for %s"
+                                % (local["ja4"], oracle["ja4"], name))
 
     def test_reparse_of_saved_raw_reproduces_ja4(self):
         for name in FAMILIES:
@@ -189,6 +218,88 @@ class WireOrderFrozen(unittest.TestCase):
         raw = bytes.fromhex(cap["raw"])
         alps = [e for e in cap["fields"]["extensions"] if e["type"] == 0x44CD]
         self.assertEqual(len(alps), 1)
+
+
+# Real browser captures (operator's tls.peet.ws 2026-11-22 runs) reduced to
+# constants. The raw capture JSONs are never committed; these slices ship
+# as code (operator decision).
+REAL_BRAVE_JA4 = "t13d1516h2_8daaf6152771_806a8c22fdea"
+REAL_BRAVE_JA4_R_CIPHERS = "002f,0035,009c,009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,cca9"
+REAL_BRAVE_SIGS = "0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601"
+REAL_BRAVE_EXTS = "0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,fe0d,ff01"
+REAL_FIREFOX_JA4 = "t13d1517h2_8daaf6152771_e6dcd7ae0a9e"
+REAL_FIREFOX_EXTS = "0005,000a,000b,000d,0012,0017,001b,001c,0022,0029,002b,002d,0033,fe0d,ff01"
+REAL_FIREFOX_SIGS = "0403,0503,0603,0804,0805,0806,0401,0501,0601,0203,0201"
+# Firefox-only gaps the provider cannot express:
+FIREFOX_UNSIGNABLE_SIGS = ("0203", "0201")  # ecdsa_ed25519/ed448-era, not offerable
+FIREFOX_UNSIGNABLE_EXT = "0029"             # pre_shared_key: needs real session state
+
+
+class ParityLedger(unittest.TestCase):
+    """Full parity vs the real captures everywhere the provider can
+    express the browser's wire, and a frozen, explicit ledger of every
+    gap it cannot (issue #4/#5). If a gap below ever closes, tighten it:
+    the set-contract pin must absorb any newly offerable value."""
+
+    def cap(self, family):
+        return load(os.path.join(CLIENTS, family + ".json"))
+
+    def sigs(self, family):
+        return [s.lower() for s in self.cap(family)["fields"]["signature_algorithms"]]
+
+    def ext_r(self, ja4_r):
+        return set(ja4_r.split("_")[2].split(",")) if ja4_r.count("_") >= 3 else set()
+
+    def test_brave_extension_signature_hash_matches_real(self):
+        ours = self.cap("lyrebird-brave")["ja4"].split("_")
+        self.assertEqual(ours[2], REAL_BRAVE_JA4.split("_")[2],
+                         "brave extension+signature hash drifted from the real capture")
+
+    def test_brave_sig_algorithms_byte_exact(self):
+        self.assertEqual(",".join(self.sigs("lyrebird-brave")), REAL_BRAVE_SIGS)
+
+    def test_brave_extension_set_matches_real(self):
+        ours = self.ext_r(self.cap("lyrebird-brave")["ja4_r"])
+        self.assertEqual(ours, set(REAL_BRAVE_EXTS.split(",")))
+
+    def test_brave_cipher_gap_ledger(self):
+        cap = self.cap("lyrebird-brave")
+        ciphers = [c.lower() for c in cap["fields"]["ciphers"]]
+        # SCSV artifact dropped when the cipher pin is active
+        self.assertNotIn("00ff", ciphers)
+        self.assertTrue(ch.is_grease(int(ciphers[0], 16)))  # leading GREASE
+        real_set = set(REAL_BRAVE_JA4_R_CIPHERS.split(","))
+        self.assertTrue(set(ciphers[1:]) <= real_set,
+                        "our ciphers must be a subset of the browser offer")
+        # ledger: 9 offerable of 15; cipher-count digit 9 vs 15
+        self.assertIn(9, [p[1] for p in ja4_head_parses(cap["ja4"])])
+        self.assertEqual(cap["ja4"].split("_")[1], "f91f431d341e")  # 9-of-15 hash
+        self.assertNotEqual(cap["ja4"].split("_")[1], REAL_BRAVE_JA4.split("_")[1])
+
+    def test_firefox_sig_gap_ledger(self):
+        # full parity minus the schemes the provider cannot sign
+        expected = [s for s in REAL_FIREFOX_SIGS.split(",")
+                    if s not in FIREFOX_UNSIGNABLE_SIGS]
+        self.assertEqual(self.sigs("lyrebird-firefox"), expected)
+        # consequently the ext+sig hash differs from the real capture:
+        self.assertNotEqual(
+            self.cap("lyrebird-firefox")["ja4"].split("_")[2],
+            REAL_FIREFOX_JA4.split("_")[2])
+        caps = self.cap("lyrebird-firefox")
+        self.assertLess(len(self.sigs("lyrebird-firefox")), len(REAL_FIREFOX_SIGS.split(",")))
+        self.assertEqual(caps["ja4"].split("_")[2], "ba4afa82cbcb")
+
+    def test_firefox_extension_set_ledger(self):
+        # the ONLY set difference vs the real capture is pre_shared_key:
+        # a real PSK binder cannot be conjured honestly (an empty offer
+        # is rejected by live servers, proven 2026-11-22)
+        ours = self.ext_r(self.cap("lyrebird-firefox")["ja4_r"])
+        real = set(REAL_FIREFOX_EXTS.split(","))
+        self.assertEqual(ours, real - {FIREFOX_UNSIGNABLE_EXT})
+        self.assertNotIn(0x0029, [e["type"] for e in
+                                  self.cap("lyrebird-firefox")["fields"]["extensions"]])
+        # and the shared values are all byte-exact members of the real set
+        self.assertTrue(ours <= real)
 
 
 if __name__ == "__main__":

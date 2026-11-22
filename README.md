@@ -90,8 +90,9 @@ harness prove exact wire-order parity for every value the provider offers
 Firefox: `1301,1303,1302,c02b,c02f,cca9,cca8,c02c,c030`, no GREASE), and
 both live modes handshake HTTP 200 against tls.peet.ws with the MLKEM
 key share first. Honest gaps remain, all tracked in [#4](../../issues/4):
-the provider offers 9 suites where the browsers offer 15, rustls appends
-the SCSV and a few aws-lc verifier schemes the browsers do not list, and
+the provider offers 9 suites where the browsers offer 15, rustls then
+still appended the SCSV and a few aws-lc verifier schemes the browsers
+do not list (both dropped later by the set contract), and
 the extension set and its order are still rustls-native (no ALPS, no
 compress_certificate, no ECH offer). [#5](../../issues/5) keeps the
 Firefox-specific remainder and [#6](../../issues/6) the EpoxyIdentity seam
@@ -121,9 +122,36 @@ Honest gaps: Firefox's captured pre_shared_key is not emitted because
 honest session state does not exist and an empty offer was proven
 rejected by a live server (unexpected_message; extension count 16 vs
 the capture's 17), Firefox-only 0203/0201 signature schemes are not
-offerable, the provider still offers 9 of the browsers' 15 cipher suites
-plus the rustls 00ff SCSV artifact, and Firefox's zstd compression
-algorithm has no rustls decompressor.
+offerable, the provider still offers 9 of the browsers' 15 cipher suites,
+and Firefox's zstd compression algorithm has no rustls decompressor.
+
+The pin lists are now literal set contracts, not just order overrides
+(`pin_by_preference` in 0002): a value the captured browser does not
+offer is dropped from our wire. That closed the last non-hardware tells
+in the signature-algorithms and extension lists — rustls's 00ff SCSV
+artifact and the aws-lc verifier leftovers (0603/0807 and the 0x09xx
+family the browsers do not list) are gone when a cipher pin is active,
+and our Brave JA4 extension+signature part is byte-identical to the
+real capture (`806a8c22fdea`, the same hash peet computed for the real
+browser; the entire signature list matches entry for entry). The
+remaining JA4 diffs against the real captures are frozen in the harness
+parity ledger (`tools/capture/test_clienthello.py`, `ParityLedger`):
+cipher count 9 vs 15 and the cipher hash (provider availability), the
+two Firefox schemes the provider cannot sign, and Firefox's p-521
+group. The h2 engine path is now proven 1:1 end to end: the probe grew
+`brave-h2-live` / `firefox-h2-live` modes (a hand-rolled HTTP/2 client,
+no new dependencies, byte contracts in
+`crates/handshake-probe/src/h2shape.rs`) that sent
+`1:65536;2:0;4:6291456;6:262144|15663105|0|m,a,s,p`
+(hash `52d84b11737d980aef856699f885ca86`) for Brave and
+`1:65536;2:0;4:131072;5:16384|12517377|0|m,p,a,s`
+(hash `6ea73faa8fc5aac76bded7bd238f6433`) for Firefox against
+tls.peet.ws — exactly the captured browsers' akamai fingerprints,
+HEADERS priority included. CI is strict end to end: patches apply with
+`--fuzz=0` against the pinned tarball, the harness discovers every
+`test_*.py`, probe unit tests freeze the profile data and the exact
+frame bytes, and the release build (the binary all captures are taken
+with) is itself gated.
 
 ## Known constraints
 

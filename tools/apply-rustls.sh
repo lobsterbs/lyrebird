@@ -31,7 +31,9 @@ applied=0
 for patch_file in patches/*.patch; do
     [ -e "$patch_file" ] || continue
     echo "apply-rustls: applying $patch_file"
-    patch -d "$DEST" -p1 < "$patch_file"
+    # strict: no fuzz, no offset drift tolerated; a patch that no longer
+    # applies byte-clean against the pinned tarball must be regenerated
+    patch -d "$DEST" -p1 --fuzz=0 < "$patch_file"
     applied=$((applied + 1))
 done
 

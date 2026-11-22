@@ -9,3 +9,10 @@ wasm32-unknown-unknown with the ring provider).
 Patches in this directory are what turn baseline rustls into the lyrebird
 ClientHello shaping work of issues #3 and #4. Keep them small, one concern per
 patch, and ordered so each applies on top of the previous one.
+
+`tools/apply-rustls.sh` applies every patch with `--fuzz=0` against the
+pinned tarball, so a patch that no longer applies byte-clean must be
+regenerated rather than fuzzed in. Regenerate with
+`tools/gen_patch.py <pristine-plus-0001> <patched-tree> <out.patch>`; the
+result reproduces the vendored tree byte-identically (verified locally
+2026-11-22 by walking both trees after a from-scratch double apply).

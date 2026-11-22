@@ -16,12 +16,8 @@ jobs:
       - name: add wasm32 target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: capture harness tests (offline)
-        run: python3 -m unittest test_clienthello.py
-        working-directory: tools/capture
-
-      - name: h2 shape tests (offline)
-        run: python3 -m unittest test_h2shapes.py
+      - name: capture harness tests (offline, discover all test files)
+        run: python3 -m unittest discover -p 'test_*.py' -v
         working-directory: tools/capture
 
       - name: native check (rustls, ring provider)
@@ -34,6 +30,10 @@ jobs:
 
       - name: probe order-data tests
         run: cargo test
+        working-directory: crates/handshake-probe
+
+      - name: probe release build (the binary all captures are taken with)
+        run: cargo build --release
         working-directory: crates/handshake-probe
 
       - name: wasm32 check (rustls, ring provider)

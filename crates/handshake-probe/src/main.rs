@@ -19,6 +19,11 @@
 //!   probe firefox-local <sni-host> <port>
 //!                                     Firefox 160 order profile, no GREASE,
 //!                                     aws-lc provider
+//!   probe brave-h2-live <host> <port> <path>
+//!   probe firefox-h2-live <host> <port> <path>
+//!                                     live TLS + hand-rolled HTTP/2 with the
+//!                                     profile's SETTINGS/WINDOW_UPDATE/
+//!                                     HEADERS shaping (h2 only ALPN)
 //!
 //! No ALPN is offered and no session resumption is used, so both modes send a
 //! byte-similar ClientHello (only the SNI value varies).
@@ -34,6 +39,7 @@ use rustls::ClientHelloProfile;
 use rustls::DigitallySignedStruct;
 use rustls::RootCertStore;
 
+mod h2shape;
 mod profiles;
 
 #[derive(Debug)]
@@ -138,7 +144,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 4 {
         eprintln!(
-            "usage: probe live <host> <port> <path>\n       probe local <sni-host> <port>\n       probe grease-live <host> <port> <path>\n       probe grease-local <sni-host> <port>\n       probe brave-live <host> <port> <path>\n       probe brave-local <sni-host> <port>\n       probe firefox-live <host> <port> <path>\n       probe firefox-local <sni-host> <port>"
+            "usage: probe live <host> <port> <path>\n       probe local <sni-host> <port>\n       probe grease-live <host> <port> <path>\n       probe grease-local <sni-host> <port>\n       probe brave-live <host> <port> <path>\n       probe brave-local <sni-host> <port>\n       probe firefox-live <host> <port> <path>\n       probe firefox-local <sni-host> <port>\n       probe brave-h2-live <host> <port> <path>\n       probe firefox-h2-live <host> <port> <path>"
         );
         std::process::exit(2);
     }
@@ -156,11 +162,11 @@ fn main() {
             let p = args.get(4).cloned().unwrap_or_else(|| "/".to_string());
             (host, format!("{}:{}", args[2], port), false, Some(p), Some(&GREASE_PROFILE), false)
         }
-        "brave-live" | "firefox-live" => {
+        "brave-live" | "firefox-live" | "brave-h2-live" | "firefox-h2-live" => {
             let host = args[2].clone();
             let port = args[3].clone();
             let p = args.get(4).cloned().unwrap_or_else(|| "/".to_string());
-            let prof = if mode == "brave-live" { profiles::brave() } else { profiles::firefox() };
+            let prof = if mode.starts_with("brave") { profiles::brave() } else { profiles::firefox() };
             (host, format!("{}:{}", args[2], port), false, Some(p), Some(prof), true)
         }
         "local" => {
@@ -187,6 +193,14 @@ fn main() {
 
     let mut config = build_config(insecure, profile, aws);
     match mode {
+        "brave-h2-live" => {
+            config.alpn_protocols = vec![b"h2".to_vec()];
+            config.cert_decompressors = profiles::cert_decompressors(profiles::BRAVE_COMPRESSION);
+        }
+        "firefox-h2-live" => {
+            config.alpn_protocols = vec![b"h2".to_vec()];
+            config.cert_decompressors = profiles::cert_decompressors(profiles::FIREFOX_COMPRESSION);
+        }
         "brave-live" | "brave-local" => {
             config.alpn_protocols = profiles::alpn();
             config.cert_decompressors = profiles::cert_decompressors(profiles::BRAVE_COMPRESSION);
@@ -201,6 +215,17 @@ fn main() {
     let mut conn =
         rustls::ClientConnection::new(Arc::new(config), name).expect("client connection");
     let mut sock = TcpStream::connect(&addr).expect("tcp connect");
+
+    let h2_shape = match mode {
+        "brave-h2-live" => Some(&h2shape::BRAVE_H2),
+        "firefox-h2-live" => Some(&h2shape::FIREFOX_H2),
+        _ => None,
+    };
+    if let Some(shape) = h2_shape {
+        let mut tls = rustls::Stream::new(&mut conn, &mut sock);
+        run_h2(&mut tls, shape, &sni, path.as_deref().unwrap_or("/"));
+        return;
+    }
 
     if let Some(p) = &path {
         let mut tls = rustls::Stream::new(&mut conn, &mut sock);
@@ -219,4 +244,87 @@ fn main() {
         conn.write_tls(&mut sock).expect("write clienthello");
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
+}
+
+/// Hand-rolled HTTP/2 client: sends the profile-shaped preface, SETTINGS,
+/// WINDOW_UPDATE and a request HEADERS on stream 1, then reads until the
+/// response body's END_STREAM and prints it. No h2 crate dependency.
+fn run_h2(
+    tls: &mut rustls::Stream<'_, rustls::ClientConnection, TcpStream>,
+    shape: &h2shape::H2Shape,
+    host: &str,
+    path: &str,
+) {
+    let mut flight = Vec::new();
+    flight.extend_from_slice(h2shape::PREFACE);
+    flight.extend_from_slice(&h2shape::settings_frame(shape.settings));
+    flight.extend_from_slice(&h2shape::window_update_frame(shape.window_update));
+    flight.extend_from_slice(&h2shape::request_headers_frame(shape, host, path));
+    tls.write_all(&flight).expect("write h2 preface");
+    tls.flush().expect("flush");
+
+    let mut buffered: Vec<u8> = Vec::new();
+    let mut chunk = [0u8; 4096];
+    let mut body: Vec<u8> = Vec::new();
+    'read: loop {
+        match tls.read(&mut chunk) {
+            Ok(0) => break 'read,
+            Ok(n) => buffered.extend_from_slice(&chunk[..n]),
+            Err(e) => {
+                eprintln!("h2 read error: {}", e);
+                break 'read;
+            }
+        }
+        while buffered.len() >= 9 {
+            let len = (usize::from(buffered[0]) << 16)
+                | (usize::from(buffered[1]) << 8)
+                | usize::from(buffered[2]);
+            if buffered.len() < 9 + len {
+                break;
+            }
+            let kind = buffered[3];
+            let flags = buffered[4];
+            let stream = u32::from_be_bytes([
+                buffered[5],
+                buffered[6],
+                buffered[7],
+                buffered[8] & 0x7f,
+            ]);
+            let payload_end = 9 + len;
+            match kind {
+                0x04 if flags & 0x01 == 0 => {
+                    tls.write_all(&h2shape::settings_ack_frame()).expect("settings ack");
+                    tls.flush().expect("flush");
+                }
+                0x06 if flags & 0x01 == 0 => {
+                    let payload = &buffered[9..payload_end];
+                    let mut ping = vec![0u8; 8];
+                    for (i, b) in payload.iter().take(8).enumerate() {
+                        ping[i] = *b;
+                    }
+                    tls.write_all(&h2shape::ping_ack_frame(&ping)).expect("ping ack");
+                    tls.flush().expect("flush");
+                }
+                0x00 if stream == 1 => {
+                    body.extend_from_slice(&buffered[9..payload_end]);
+                    if flags & 0x01 != 0 {
+                        buffered.drain(..payload_end);
+                        break 'read;
+                    }
+                }
+                0x01 if stream == 1 && flags & 0x01 != 0 => {
+                    buffered.drain(..payload_end);
+                    break 'read;
+                }
+                0x07 => {
+                    eprintln!("h2: server sent GOAWAY");
+                    buffered.drain(..payload_end);
+                    break 'read;
+                }
+                _ => {}
+            }
+            buffered.drain(..payload_end);
+        }
+    }
+    print!("{}", String::from_utf8_lossy(&body));
 }

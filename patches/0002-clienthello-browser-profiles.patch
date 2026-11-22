@@ -1,18 +1,42 @@
 diff -ruN a/rustls/src/client/client_hello_profile.rs b/rustls/src/client/client_hello_profile.rs
 --- a/rustls/src/client/client_hello_profile.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/client/client_hello_profile.rs	2026-11-22 22:00:00.000000000 +0000
-@@ -13,6 +13,8 @@
- /// * The order slices are preference lists: listed entries move to the
- ///   front in the given order; everything else keeps its native order.
- ///   An empty list keeps the native order untouched.
++++ b/rustls/src/client/client_hello_profile.rs	2026-11-22 23:30:00.000000000 +0000
+@@ -1,7 +1,7 @@
+ //! lyrebird: data-driven ClientHello shaping.
+ //!
+ //! A [`ClientHelloProfile`] carries fingerprint data that must come from
+-//! real captures: preference orders and GREASE. Empty preference lists
++//! real captures: pinned set-and-order data and GREASE. Empty pin lists
+ //! mean "native order" -- no order is claimed without a pinned capture.
+ 
+ use crate::{CipherSuite, NamedGroup, SignatureScheme};
+@@ -10,38 +10,68 @@
+ ///
+ /// * `grease` adds RFC 8701 GREASE bookends: the first cipher suite, the
+ ///   first extension, and the first offered protocol version.
+-/// * The order slices are preference lists: listed entries move to the
+-///   front in the given order; everything else keeps its native order.
+-///   An empty list keeps the native order untouched.
++/// * The order slices are set contracts: the advertised list is the
++///   pinned values in pinned order, intersected with what the provider
++///   can genuinely offer. Pinned-but-unofferable values are dropped (an
++///   honest availability gap); provider-only values the pinned client
++///   never advertises are dropped too. An empty list keeps the native
++///   order untouched -- no set is claimed without a pinned capture.
 +/// * `extension_order` pins the full extension order (wire type ids); an
 +///   empty slice keeps rustls's native per-connection shuffle.
  #[derive(Debug)]
  pub struct ClientHelloProfile {
      /// Emit GREASE bookends (RFC 8701).
-@@ -23,6 +25,32 @@
+     pub grease: bool,
+-    /// Preference order for cipher suites.
++    /// Advertised cipher suites, in captured order (set contract).
+     pub cipher_suites: &'static [CipherSuite],
+-    /// Preference order for signature schemes.
++    /// Advertised signature schemes, in captured order (set contract).
      pub signature_schemes: &'static [SignatureScheme],
-     /// Preference order for key exchange groups.
+-    /// Preference order for key exchange groups.
++    /// Advertised key exchange groups, in captured order (set contract).
      pub named_groups: &'static [NamedGroup],
 +    /// Full extension order as wire type ids (lyrebird). The leading
 +    /// GREASE extension is `0x0a0a`; listed types emit in this order,
@@ -28,8 +52,12 @@ diff -ruN a/rustls/src/client/client_hello_profile.rs b/rustls/src/client/client
 +    /// Offer GREASE ECH (draft-ietf-tls-esni). Real payload, random per
 +    /// connection, HPKE from the aws-lc-rs provider.
 +    pub ech_grease: bool,
-+}
-+
+ }
+ 
+-/// Reorder `offered` so entries named in `preference` come first, in the
+-/// preference order. Unlisted entries keep their relative native order.
+-pub(crate) fn reorder_by_preference<T: Copy + PartialEq>(
+-    offered: alloc::vec::Vec<T>,
 +/// A wire-frozen extension emitted verbatim from a capture (lyrebird).
 +///
 +/// No semantic is attached: the connection never acts on these beyond
@@ -40,14 +68,42 @@ diff -ruN a/rustls/src/client/client_hello_profile.rs b/rustls/src/client/client
 +    pub ext_type: u16,
 +    /// Wire extension body, verbatim capture bytes.
 +    pub body: &'static [u8],
++}
++
++/// The pin list is also the set contract: the result is the pinned
++/// values in pinned order, intersected with what the provider can
++/// genuinely offer. Provider-only leftovers the captured client never
++/// advertises are dropped; pinned entries the provider cannot supply are
++/// dropped too (an honest availability gap, surfaced on the wire rather
++/// than papered over). An empty pin list falls back to the offered order.
++pub(crate) fn pin_by_preference<T: Copy + PartialEq>(
++    offered: &[T],
+     preference: &'static [T],
+ ) -> alloc::vec::Vec<T> {
+     if preference.is_empty() {
+-        return offered;
++        return offered.to_vec();
+     }
+-
+-    let mut offered: alloc::vec::Vec<T> = offered;
+-    let mut out = alloc::vec::Vec::with_capacity(offered.len());
+-    for want in preference {
+-        if let Some(idx) = offered.iter().position(|x| *x == *want) {
+-            out.push(offered.remove(idx));
+-        }
+-    }
+-    out.append(&mut offered);
+-    out
++    preference
++        .iter()
++        .filter(|want| offered.contains(want))
++        .copied()
++        .collect()
  }
- 
- /// Reorder `offered` so entries named in `preference` come first, in the
-
 diff -ruN a/rustls/src/client/hs.rs b/rustls/src/client/hs.rs
 --- a/rustls/src/client/hs.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/client/hs.rs	2026-11-22 22:00:00.000000000 +0000
-@@ -390,7 +390,12 @@
++++ b/rustls/src/client/hs.rs	2026-11-22 23:30:00.000000000 +0000
+@@ -390,19 +390,49 @@
              if let Some(sv) = &mut exts.supported_versions {
                  sv.grease = Some(ProtocolVersion::Unknown(grease_value));
              }
@@ -60,9 +116,22 @@ diff -ruN a/rustls/src/client/hs.rs b/rustls/src/client/hs.rs
 +            }
          }
          if let Some(groups) = &mut exts.named_groups {
-             *groups = crate::client::client_hello_profile::reorder_by_preference(
-@@ -403,6 +408,27 @@
-                 core::mem::take(schemes),
+-            *groups = crate::client::client_hello_profile::reorder_by_preference(
+-                core::mem::take(groups),
++            // lyrebird: the pin list is the set contract (see
++            // pin_by_preference); provider leftovers the captured client
++            // never advertises are dropped, unavailable pins stay honest
++            // availability gaps.
++            *groups = crate::client::client_hello_profile::pin_by_preference(
++                groups,
+                 profile.named_groups,
+             );
+         }
+         if let Some(schemes) = &mut exts.signature_schemes {
+-            *schemes = crate::client::client_hello_profile::reorder_by_preference(
+-                core::mem::take(schemes),
++            *schemes = crate::client::client_hello_profile::pin_by_preference(
++                schemes,
                  profile.signature_schemes,
              );
 +        }
@@ -89,7 +158,32 @@ diff -ruN a/rustls/src/client/hs.rs b/rustls/src/client/hs.rs
          }
      }
  
-@@ -440,17 +466,41 @@
+@@ -417,8 +447,8 @@
+         .collect();
+ 
+     if let Some(profile) = profile {
+-        cipher_suites = crate::client::client_hello_profile::reorder_by_preference(
+-            cipher_suites,
++        cipher_suites = crate::client::client_hello_profile::pin_by_preference(
++            &cipher_suites,
+             profile.cipher_suites,
+         );
+         if profile.grease {
+@@ -426,7 +456,12 @@
+         }
+     }
+ 
+-    if supported_versions.tls12 {
++    // lyrebird: rustls advertises the empty-renegotiation SCSV for
++    // middlebox compat; captured browsers send the renegotiation_info
++    // extension (which profiles ship as a static) and never the SCSV.
++    // When a profile pins the cipher set, the SCSV is a wire lie.
++    let pinned_ciphers = profile.map(|p| !p.cipher_suites.is_empty()).unwrap_or(false);
++    if supported_versions.tls12 && !pinned_ciphers {
+         // We don't do renegotiation at all, in fact.
+         cipher_suites.push(CipherSuite::TLS_EMPTY_RENEGOTIATION_INFO_SCSV);
+     }
+@@ -440,17 +475,41 @@
          extensions: exts,
      };
  
@@ -139,10 +233,9 @@ diff -ruN a/rustls/src/client/hs.rs b/rustls/src/client/hs.rs
  
      match (cx.data.ech_status, &mut ech_state) {
          // If we haven't offered ECH, or have offered ECH but got a non-rejecting HRR, then
-
 diff -ruN a/rustls/src/msgs/handshake.rs b/rustls/src/msgs/handshake.rs
 --- a/rustls/src/msgs/handshake.rs	2026-10-13 11:15:01.000000000 +0000
-+++ b/rustls/src/msgs/handshake.rs	2026-11-22 22:00:00.000000000 +0000
++++ b/rustls/src/msgs/handshake.rs	2026-11-22 23:30:00.000000000 +0000
 @@ -991,6 +991,14 @@
  
          /// Extensions that must appear contiguously.
@@ -246,4 +339,3 @@ diff -ruN a/rustls/src/msgs/handshake.rs b/rustls/src/msgs/handshake.rs
          }
      }
  
-

@@ -1,10 +1,14 @@
 {
   "schema": 1,
-  "source": "tls.peet.ws /api/all (server-side view of lyrebird's own handshake-probe brave-live mode: pinned rustls v/0.23.46, aws-lc provider, Brave browser order profile from the 2026-11-22 capture)",
-  "captured_at": "2026-11-22T22:40:00+00:00",
+  "source": "tls.peet.ws /api/all (server-side view of lyrebird's own handshake-probe brave-h2-live mode over HTTP/2: pinned rustls v/0.23.46, aws-lc provider, browser order profile from the 2026-11-22 capture)",
+  "captured_at": "2026-11-22T22:07:29+00:00",
   "user_agent": "lyrebird-probe/0.4",
-  "ja4": "t13d1016h2_61a7ad8aa9b6_0765652d3d2a",
-  "ja4_r": "t13d1016h2_00ff,1301,1302,1303,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,fe0d,ff01_0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601,0603,0807",
-  "alpn_offered": ["h2", "http/1.1"],
-  "note": "Brave profile live acceptance: HTTP 200 against real WebPKI roots. peet rendered the hello as 'TLS_GREASE (0x8A8A)' leading cipher, GREASE first group, X25519MLKEM768, extension order server_name..extensionRenegotiationInfo followed by two 'TLS_GREASE' tail extensions, application_settings (17613) and extensionEncryptedClientHello present. Known honest gaps vs the real capture: cipher set offerable is 9 suites of the browser's 15 plus the rustls 00ff SCSV artifact, and signature schemes carry the aws-lc leftovers 0603/0807 that browsers do not offer."
+  "ja4": "t13d916h2_f91f431d341e_806a8c22fdea",
+  "ja4_r": "t13d916h2_1301,1302,1303,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,fe0d,ff01_0904,0905,0906,0403,0804,0401,0503,0805,0501,0806,0601",
+  "akamai_fingerprint": "1:65536;2:0;4:6291456;6:262144|15663105|0|m,a,s,p",
+  "akamai_fingerprint_hash": "52d84b11737d980aef856699f885ca86",
+  "alpn_offered": [
+    "h2"
+  ],
+  "note": "Brave profile live acceptance over the engine path: HTTP/2 with hand-rolled SETTINGS, WINDOW_UPDATE and request HEADERS shaped from the browser capture. peet rendered the akamai http2 fingerprint '1:65536;2:0;4:6291456;6:262144|15663105|0|m,a,s,p' (hash 52d84b11737d980aef856699f885ca86) exactly equal to the real browser capture, and rendered the HEADERS priority exactly (exclusive dep 0, weight 256). TLS layer: signature-schemes and extension set are byte-exact vs the real capture (ja4 extension+signature hash identical), GREASE first cipher + two trailing GREASE extensions. Remaining honest gaps: cipher offer is 9 suites of the browser's 15 (provider availability) and the ja4 cipher-count digit (9 vs 15) plus cipher hash differ accordingly."
 }

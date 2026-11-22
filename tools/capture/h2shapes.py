@@ -9,8 +9,8 @@ over pure data. This module pins, per browser:
 - the SETTINGS payload (frame body bytes: id u16 BE, value u32 BE),
 - the connection-level WINDOW_UPDATE increment,
 - the number of PRIORITY frames sent before the first HEADERS (0 for
-  both captures, though Brave sent a PRIORITY flag on the HEADERS frame
-  with weight 256, depends_on 0, exclusive), and
+  both captures; both browsers instead set the PRIORITY FLAG on the
+  HEADERS frame itself), and
 - the pseudo-header wire order.
 
 Raw capture JSONs are never committed (operator constraint); these
@@ -41,9 +41,23 @@ FIREFOX_PSEUDO_ORDER = ("m", "p", "a", "s")
 FIREFOX_AKAMAI = "1:65536;2:0;4:131072;5:16384|12517377|0|m,p,a,s"
 FIREFOX_AKAMAI_HASH = "6ea73faa8fc5aac76bded7bd238f6433"
 
-# flag bits of the first HEADERS frame in each capture
+# flag bits of the first HEADERS frame in each capture: both browsers
+# set EndStream | EndHeaders | Priority (0x25). peet renders the real
+# Firefox HEADERS with a Priority flag too (weight 22, depends_on 0,
+# not exclusive) -- an earlier reading of 0x05 here was wrong.
 BRAVE_HEADERS_FLAGS = 0x25    # EndStream | EndHeaders | Priority
-FIREFOX_HEADERS_FLAGS = 0x05  # EndStream | EndHeaders
+FIREFOX_HEADERS_FLAGS = 0x25  # EndStream | EndHeaders | Priority
+
+
+def priority_wire(exclusive, depends_on, weight):
+    """5-byte HEADERS priority payload: (exclusive<<31 | depends_on) u32
+    BE, then weight-1 (wire stores weight minus 1)."""
+    first = (0x80000000 if exclusive else 0) | depends_on
+    return first.to_bytes(4, "big") + bytes([weight - 1])
+
+
+BRAVE_HEADERS_PRIORITY = priority_wire(True, 0, 256)    # exclusive, weight 256
+FIREFOX_HEADERS_PRIORITY = priority_wire(False, 0, 22)  # weight 22
 
 
 def settings_payload(items):
