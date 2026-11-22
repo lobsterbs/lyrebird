@@ -9,8 +9,11 @@ publish = false
 rustls = { path = "../../vendor/rustls/rustls", default-features = false, features = ["std", "ring", "tls12"] }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
-# ring pulls getrandom 0.2, which refuses wasm32-unknown-unknown unless the
-# js backend is on. ring ships that behind its wasm32_unknown_unknown_js
-# feature; epoxy-tls flips the same switch from its own crate. Features unify,
-# so this dep turns the backend on for the whole graph, wasm only.
+# On wasm32 the graph needs three switches that no rustls feature reaches.
+# epoxy-tls flips all three from its own client crate; features unify, so
+# these deps turn them on for the whole graph, this target only.
+#   getrandom/js and ring/wasm32_unknown_unknown_js: entropy on wasm.
+#   rustls-pki-types/web: gives UnixTime::now() via web-time.
 getrandom = { version = "0.2", features = ["js"] }
+ring = { version = "0.17", features = ["wasm32_unknown_unknown_js"] }
+rustls-pki-types = { version = "1", features = ["web"] }
