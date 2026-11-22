@@ -64,16 +64,21 @@ raw captures are the strong gate.
 
 Seeded 2026-11-22. Shipped so far: the [#1](../../issues/1) capture harness
 (`tools/capture` builds JA4 from real ClientHellos, fixtures verified against
-the tls.peet.ws oracle) and the [#2](../../issues/2) patch pipeline with its
-baseline CI (pinned rustls v/0.23.46, zero patches, native and wasm32 checks
-green). The baseline shape itself is pinned too: `crates/handshake-probe`
-performed a live handshake against tls.peet.ws and the committed
-`rustls-baseline` fixture matches the server-side view
-(`t13d101000_61a7ad8aa9b6_3fcd1a44f3e3`). Next on the roadmap:
-[#3](../../issues/3) the Chrome ClientHello
-extension layer, [#4](../../issues/4) Chrome advanced tells,
-[#5](../../issues/5) the Firefox profile, [#6](../../issues/6) the
-EpoxyIdentity seam and parity gate.
+the tls.peet.ws oracle), the [#2](../../issues/2) patch pipeline with its
+baseline CI (pinned rustls v/0.23.46, native and wasm32 checks green), and
+the [#3](../../issues/3) first ClientHello patch:
+`0001-clienthello-grease-profile.patch` adds a data-driven
+`ClientHelloProfile` (RFC 8701 GREASE bookends plus preference orders for
+cipher suites, signature schemes, and named groups, applied per connection
+through `ClientConfig::with_client_hello_profile`). The wire proof is
+committed: the `rustls-grease` fixture pair shows the GREASE first cipher,
+first extension, and first supported version on the wire, live-verified
+against tls.peet.ws, with JA4 unchanged from the baseline
+(`t13d101000_61a7ad8aa9b6_3fcd1a44f3e3`). No order is claimed from memory:
+profile order data lands only when pinned captures of real browsers exist.
+Next on the roadmap: [#4](../../issues/4) browser order data and Chrome
+advanced tells, [#5](../../issues/5) the Firefox profile, [#6](../../issues/6)
+the EpoxyIdentity seam and parity gate.
 
 ## Known constraints
 

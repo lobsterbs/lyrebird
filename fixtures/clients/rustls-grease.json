@@ -1,0 +1,123 @@
+{
+  "schema": 1,
+  "tool": "clienthello_peek",
+  "label": "rustls-grease",
+  "captured_at": "2026-11-22T20:18:22+00:00",
+  "peer": "127.0.0.1:45368",
+  "raw": "1603010102010000fe03039913e886ee4eef20c62f9004144da797271c3828faf386018fecc03bb4b732bf202172013639cfddc8c6d9e4406651476db573b729412efd540483900745a65f1e00169a9a130213011303c02cc02bcca9c030c02fcca800ff0100009f0a0a0002000000230000002d00020101002b0007069a9a03040303001700000000001900170000146772656173652e6c6f63616c2e6578616d706c65000b00020100000a00080006001d00170018000d00140012050304030807080608050804060105010401003300260024001d00200652da361b0a5bc683b3484ff0d8d83d1afe6d794d727d26dd9faa4db40720780005000501000000000a0a00020000",
+  "ja4": "t13d101000_61a7ad8aa9b6_3fcd1a44f3e3",
+  "ja4_r": "t13d101000_00ff,1301,1302,1303,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0017,0023,002b,002d,0033_0503,0403,0807,0806,0805,0804,0601,0501,0401",
+  "fields": {
+    "record_version": "0301",
+    "legacy_version": "0303",
+    "session_id": "2172013639cfddc8c6d9e4406651476db573b729412efd540483900745a65f1e",
+    "ciphers": [
+      "9a9a",
+      "1302",
+      "1301",
+      "1303",
+      "c02c",
+      "c02b",
+      "cca9",
+      "c030",
+      "c02f",
+      "cca8",
+      "00ff"
+    ],
+    "compressions": [
+      "00"
+    ],
+    "extensions": [
+      {
+        "type": 2570,
+        "name": "0x0a0a",
+        "len": 2
+      },
+      {
+        "type": 35,
+        "name": "session_ticket",
+        "len": 0
+      },
+      {
+        "type": 45,
+        "name": "psk_key_exchange_modes",
+        "len": 2
+      },
+      {
+        "type": 43,
+        "name": "supported_versions",
+        "len": 7
+      },
+      {
+        "type": 23,
+        "name": "extended_master_secret",
+        "len": 0
+      },
+      {
+        "type": 0,
+        "name": "server_name",
+        "len": 25
+      },
+      {
+        "type": 11,
+        "name": "ec_point_formats",
+        "len": 2
+      },
+      {
+        "type": 10,
+        "name": "supported_groups",
+        "len": 8
+      },
+      {
+        "type": 13,
+        "name": "signature_algorithms",
+        "len": 20
+      },
+      {
+        "type": 51,
+        "name": "key_share",
+        "len": 38
+      },
+      {
+        "type": 5,
+        "name": "status_request",
+        "len": 5
+      },
+      {
+        "type": 2570,
+        "name": "0x0a0a",
+        "len": 2
+      }
+    ],
+    "sni": "grease.local.example",
+    "alpn": [],
+    "supported_versions": [
+      "9a9a",
+      "0304",
+      "0303"
+    ],
+    "signature_algorithms": [
+      "0503",
+      "0403",
+      "0807",
+      "0806",
+      "0805",
+      "0804",
+      "0601",
+      "0501",
+      "0401"
+    ],
+    "key_share_groups": [
+      "001d"
+    ],
+    "supported_groups": [
+      "001d",
+      "0017",
+      "0018"
+    ],
+    "psk_modes": [
+      "01"
+    ],
+    "cert_compression": []
+  }
+}

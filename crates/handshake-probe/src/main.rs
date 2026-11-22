@@ -6,6 +6,10 @@
 //!   probe live <host> <port> <path>   real WebPKI roots, prints the response
 //!   probe local <sni-host> <port>     insecure verifier, for capture against
 //!                                     peek.py (only the first flight is sent)
+//!   probe grease-live <host> <port> <path>
+//!   probe grease-local <sni-host> <port>
+//!                                     same as live/local, with the GREASE
+//!                                     profile (bookends only, native orders)
 //!
 //! No ALPN is offered and no session resumption is used, so both modes send a
 //! byte-similar ClientHello (only the SNI value varies).
@@ -62,12 +66,21 @@ impl ServerCertVerifier for NoVerify {
     }
 }
 
-fn build_config(insecure: bool) -> rustls::ClientConfig {
+static GREASE_PROFILE: rustls::ClientHelloProfile = rustls::ClientHelloProfile {
+    grease: true,
+    // Bookends only. Order data lands when a pinned real-client capture
+    // exists; no order is claimed without one.
+    cipher_suites: &[],
+    signature_schemes: &[],
+    named_groups: &[],
+};
+
+fn build_config(insecure: bool, grease: bool) -> rustls::ClientConfig {
     let provider = Arc::new(rcrypto::default_provider());
     let builder = rustls::ClientConfig::builder_with_provider(provider)
         .with_protocol_versions(&[&rustls::version::TLS13, &rustls::version::TLS12])
         .expect("protocol versions");
-    if insecure {
+    let config = if insecure {
         let mut roots = RootCertStore::empty();
         roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
         let inner = rustls::client::WebPkiServerVerifier::builder(Arc::new(roots))
@@ -83,27 +96,46 @@ fn build_config(insecure: bool) -> rustls::ClientConfig {
         builder
             .with_root_certificates(roots)
             .with_no_client_auth()
+    };
+
+    if grease {
+        config.with_client_hello_profile(&GREASE_PROFILE)
+    } else {
+        config
     }
 }
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 4 {
-        eprintln!("usage: probe live <host> <port> <path>\n       probe local <sni-host> <port>");
+        eprintln!(
+            "usage: probe live <host> <port> <path>\n       probe local <sni-host> <port>\n       probe grease-live <host> <port> <path>\n       probe grease-local <sni-host> <port>"
+        );
         std::process::exit(2);
     }
     let mode = args[1].as_str();
-    let (sni, addr, insecure, path) = match mode {
+    let (sni, addr, insecure, path, grease) = match mode {
         "live" => {
             let host = args[2].clone();
             let port = args[3].clone();
             let p = args.get(4).cloned().unwrap_or_else(|| "/".to_string());
-            (host, format!("{}:{}", args[2], port), false, Some(p))
+            (host, format!("{}:{}", args[2], port), false, Some(p), false)
+        }
+        "grease-live" => {
+            let host = args[2].clone();
+            let port = args[3].clone();
+            let p = args.get(4).cloned().unwrap_or_else(|| "/".to_string());
+            (host, format!("{}:{}", args[2], port), false, Some(p), true)
         }
         "local" => {
             let sni_host = args[2].clone();
             let port = args[3].clone();
-            (sni_host, format!("127.0.0.1:{}", port), true, None)
+            (sni_host, format!("127.0.0.1:{}", port), true, None, false)
+        }
+        "grease-local" => {
+            let sni_host = args[2].clone();
+            let port = args[3].clone();
+            (sni_host, format!("127.0.0.1:{}", port), true, None, true)
         }
         other => {
             eprintln!("unknown mode {}", other);
@@ -111,7 +143,7 @@ fn main() {
         }
     };
 
-    let config = build_config(insecure);
+    let config = build_config(insecure, grease);
     let name = ServerName::try_from(sni.clone()).expect("server name");
     let mut conn =
         rustls::ClientConnection::new(Arc::new(config), name).expect("client connection");

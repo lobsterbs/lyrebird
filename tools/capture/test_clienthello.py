@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 CLIENTS = os.path.join(ROOT, "fixtures", "clients")
 ORACLE = os.path.join(ROOT, "fixtures", "oracle")
-FAMILIES = ["curl-openssl", "node22", "python312", "rustls-baseline"]
+FAMILIES = ["curl-openssl", "node22", "python312", "rustls-baseline", "rustls-grease"]
 
 
 def load(path):
@@ -97,6 +97,40 @@ class SpecRules(unittest.TestCase):
         self.assertNotIn("0a0a", ja4_r)
         self.assertNotIn("0000", ja4_r)
         self.assertNotIn("0010", ja4_r.split("_"))
+
+
+class GreaseTells(unittest.TestCase):
+    """rustls-grease: wire proof of the RFC 8701 profile layer (issue #3)."""
+
+    def setUp(self):
+        self.grease = load(os.path.join(CLIENTS, "rustls-grease.json"))
+        self.baseline = load(os.path.join(CLIENTS, "rustls-baseline.json"))
+
+    def test_bookends_present(self):
+        f = self.grease["fields"]
+        first_cipher = int(f["ciphers"][0], 16)
+        first_ext = f["extensions"][0]["type"]
+        first_version = int(f["supported_versions"][0], 16)
+        self.assertTrue(ch.is_grease(first_cipher), hex(first_cipher))
+        self.assertTrue(ch.is_grease(first_ext), hex(first_ext))
+        self.assertTrue(ch.is_grease(first_version), hex(first_version))
+
+    def test_grease_value_is_random_derived(self):
+        # cipher and supported_versions share one value drawn from
+        # client_random; the extension type is the fixed enum constant 0x0a0a
+        f = self.grease["fields"]
+        v = int(f["ciphers"][0], 16)
+        self.assertEqual(int(f["supported_versions"][0], 16), v)
+        self.assertTrue(ch.is_grease(v))
+        self.assertEqual(f["extensions"][0]["type"], 0x0A0A)
+        self.assertTrue(ch.is_grease(f["extensions"][0]["type"]))
+
+    def test_ja4_unchanged_by_grease(self):
+        self.assertEqual(self.grease["ja4"], self.baseline["ja4"])
+        self.assertEqual(self.grease["ja4_r"], self.baseline["ja4_r"])
+        # and the substance behind the hashes is the same set of real values
+        self.assertEqual(sorted(self.grease["fields"]["ciphers"][1:]),
+                         sorted(self.baseline["fields"]["ciphers"]))
 
 
 if __name__ == "__main__":
