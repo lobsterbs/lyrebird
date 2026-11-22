@@ -1,10 +1,8 @@
 ```
-__                __    _          __
-/ /_  __________  / /_  (*)______**/ /
-/ / / / / / _ / __ / / / __  /
-/ /****/ / /  /  __/ // / / /  // /
-//_, //   _**/.*/*//   _,*/
-/*___/
+       \\
+       (o>
+    \\_//)
+     \_/_)
 ```
 
 # lyrebird
@@ -17,17 +15,17 @@ our handshakes as its own regular visitor, not as a robot.
 
 ## Why this exists
 
-The Zeolite engine's epoxy transport terminates TLS with stock rustls, and
-stock rustls has an honest, unmistakable fingerprint: no GREASE values, a fixed
-extension order, no X25519MLKEM768 key share, no ALPS, no compress_certificate
-negotiation, and rustls ordering of cipher suites and signature algorithms.
-Some sites gate on exactly these tells before any page loads. DuckDuckGo
-refuses the stock shape outright, and the Cloudflare-class risk gates score it
-below a real client even before IP reputation enters the picture.
+Stock rustls ends TLS with an honest, unmistakable fingerprint: no GREASE
+values, a fixed extension order, no X25519MLKEM768 key share, no ALPS, no
+compress_certificate negotiation, and rustls ordering of cipher suites and
+signature algorithms. Sites that fingerprint TLS gate on exactly these tells
+before any page loads. DuckDuckGo refuses the stock shape outright, and the
+Cloudflare-class risk gates score it below a real client even before IP
+reputation enters the picture.
 
 Importing a patched Chrome TLS stack is not an option either: the BoringSSL
-family does not build to wasm32, and epoxy runs in the browser. So parity has
-to come from rustls itself, tell by tell.
+family does not build to wasm32, and the client runs in the browser. So parity
+has to come from rustls itself, tell by tell.
 
 ## What "done" means
 
@@ -51,8 +49,8 @@ raw captures are the strong gate.
 ## Approach
 
 - A vendored rustls fork carrying small, documented patches to ClientHello
-  construction and record behavior, with every optional tell driven by profile
-  data rather than hardcoded.
+  construction and record behavior (`tools/apply-rustls.sh`, `patches/`),
+  with every optional tell driven by profile data rather than hardcoded.
 - h2 SETTINGS shaping at the hyper/h2 layer.
 - Profiles ship as data, none is enabled by default. Fingerprint profiles stay
   opt-in unless a site lane needs one.
@@ -64,11 +62,14 @@ raw captures are the strong gate.
 
 ## Status
 
-Seeded 2026-11-22. No shipped code yet; the roadmap lives in the issues, in
-creation order: [#1](../../issues/1) reference captures, [#2](../../issues/2)
-wasm-green rustls fork baseline, [#3](../../issues/3) the Chrome ClientHello
-extension layer, [#4](../../issues/4) Chrome advanced tells, [#5](../../issues/5)
-the Firefox profile, [#6](../../issues/6) the EpoxyIdentity seam and parity gate.
+Seeded 2026-11-22. Shipped so far: the [#1](../../issues/1) capture harness
+(`tools/capture` builds JA4 from real ClientHellos, fixtures verified against
+the tls.peet.ws oracle) and the [#2](../../issues/2) patch pipeline with its
+baseline CI (pinned rustls v/0.23.46, zero patches, native and wasm32 checks
+green). Next on the roadmap: [#3](../../issues/3) the Chrome ClientHello
+extension layer, [#4](../../issues/4) Chrome advanced tells,
+[#5](../../issues/5) the Firefox profile, [#6](../../issues/6) the
+EpoxyIdentity seam and parity gate.
 
 ## Known constraints
 
@@ -84,7 +85,7 @@ the Firefox profile, [#6](../../issues/6) the EpoxyIdentity seam and parity gate
 
 ## Related
 
-- [lobsterbs/Zeolite](https://github.com/lobsterbs/Zeolite): the engine whose
-  epoxy transport consumes this.
+- [MercuryWorkshop/epoxy-tls](https://github.com/MercuryWorkshop/epoxy-tls):
+  upstream epoxy, the wasm TLS transport these profiles are shaped for.
 - [lobsterbs/LobsterBrowse](https://github.com/lobsterbs/LobsterBrowse): the
   product surface.

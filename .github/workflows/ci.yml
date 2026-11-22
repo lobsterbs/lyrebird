@@ -16,10 +16,10 @@ jobs:
       - name: add wasm32 target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: native check (rustls client, ring provider)
-        run: cargo check -p rustls --no-default-features --features std,ring,client,tls12
+      - name: native check (rustls, ring provider)
+        run: cargo check -p rustls --no-default-features --features std,ring,tls12
         working-directory: vendor/rustls
 
-      - name: wasm32 check (rustls client, ring provider)
-        run: cargo check --target wasm32-unknown-unknown -p rustls --no-default-features --features std,ring,client,tls12
+      - name: wasm32 check (rustls, ring provider)
+        run: cargo check --target wasm32-unknown-unknown -p rustls --no-default-features --features std,ring,tls12
         working-directory: vendor/rustls
