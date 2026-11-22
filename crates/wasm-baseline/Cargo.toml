@@ -1,0 +1,16 @@
+[package]
+name = "wasm-baseline"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+# The rustls we profile: same pin the patch pipeline unpacks.
+rustls = { path = "../../vendor/rustls/rustls", default-features = false, features = ["std", "ring", "tls12"] }
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+# ring pulls getrandom 0.2, which refuses wasm32-unknown-unknown unless the
+# js backend is on. ring ships that behind its wasm32_unknown_unknown_js
+# feature; epoxy-tls flips the same switch from its own crate. Features unify,
+# so this dep turns the backend on for the whole graph, wasm only.
+getrandom = { version = "0.2", features = ["js"] }
