@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "tool": "clienthello_peek",
+  "label": "node22",
+  "captured_at": "2026-11-22T19:19:54+00:00",
+  "peer": "127.0.0.1:36194",
+  "raw": "16030106410100063d030378583f7ab61a37bba8f790042e11e9070a2af9e5309c37051c6da176436d8d8420d291068b1da056de3e3606ab4c95269304c80eb707b3c0c3beebf4f035edc3580068130213031301c02fc02bc030c02c009ec0270067c028006b00a3009fcca9cca8ccaac0adc09fc05dc061c057c05300a2c0acc09ec05cc060c056c052c024006ac0230040c00ac01400390038c009c01300330032009dc09dc051009cc09cc050003d003c0035002f0100058cff0100010000000010000e00000b746c732e706565742e7773000b000403000102000a0012001011ec001d0017001e0018001901000101002300000010000e000c02683208687474702f312e310016000000170000000d0036003409050906090404030503060308070808081a081b081c0809080a080b080408050806040105010601030303010302040205020602002b00050403040303002d00020101003304ea04e811ec04c09d62bed9d12522a828bff82bf29915a9b7b231f0b90a70b4b1d7c625cc8f923bb21f8c4d4f255ff0c2817c938af8d16fe42b1d40a28fbd445d2b0b8c336acb286b96320362bbd0cefc537d8726329a515ce0d79acda0a0d414793bb81b84a4193527ce28b63d2489cd2721961021788ffa78c43ba1040522a09630c9215237b91491661a54313951d74debe6cd820789434a761f06b87b1c49e6eab6ab21138e1bccfb6c092a9541aa9347a696516aacb59e2c0559c95753279f9f0c76cce37b5fc1284af4b16a288c3110164cdc5e10f8bd3d133f325a10302564c049a0eb5ac691ca2a7c855a951177f7e9007371ace21c844c2158184591fd557821a78535e513fa78b74347389039cfb5463dc95c1844f7294b2372ba4752e4ca1bbe682178f296e8ba95b68a4cc5700695219bc2b23889da5a988603a255585a885e85b566e7bcacab19417ea4a9faa34e050b3b7fb20556841a3b9a2f35b97f758951eea1c6a89006cdbc4d342616cf01920218251655771ad48c428898fc1a57e2b839ad5c6ec20040abaac6b717805f6c8f6c23a2b79c29b0a22d9f6b92a9292f95852e5b471b8f441bc88b57d79326d5279a730c37a2f1cc5120aec4963ee2d66debd197588a4c2c720fe5b0bf3be20c6c9a0c7a69a165bc80e266b44065818c8b399797b812490872c21326a729ce7801b2754407d0476a65a4e2790c8838402c29c7d213c752827333843c1ce50d0544510d450b9d8c7b93ba1db21c6e1ce484d3c1245deb60ac3b95c8d87650f60624f437f3505079938be1f8cc0fab1f358b9753c698f28a18e37a7b7a7ba0e788a77d94c15bda5a7c038c034c993644bb56527c692c99a6f31029620d73b5a6d2d8ad11ac4059930f124bb5c9f58bd1308274e52602a8c6151c0610ec611ad3c889386f01d5bf82b30bcf164e4f63aa3bab4d7658622a057ec496331fa405c1e64478f9ba99e955bd160171e375c6cb7b026c5034f80b81da17abe7129efbc832bc65554300ef9606bd628dd1a68ad669139e6902379b2f5684af250c2dd4d4114e410178f6bd8413441153aed7821aa7308b2da1609d31072e72315d23a99d400f9fbb4986c425c180b906d2b2e6a88a20c875ac5269d54051de28bdb368b55045772720b36e6c98e960673a6364085ca2a1410c3c221646052e2b6b26cd824826f4bd8f119ae410819eab586e9c3434f1bf3d672de2370a9b466c3611b607e8a0c5f054d4958468e0bf6c95b9da4cc841e86dfbb92cf793c22788b118890e11a9a623858bb0fa9ba815196bc36c8de732abbca06dc9bc4aa609466a387fa1b408f4661ab553311048fa57172c94c1a591aaa8877ab2b5c3eb75a7972a39a8b8981816599f423ecc6448868013bac896d4b7aad3806a1b8188f02a5b40995b25c561159292d7a7144e024802f94dacd76f67da12cf9158f1dba8ce6577e7a8971fca68af73239dd245276358ed8685bb35171f2179494cae6ac17cf9c793b9dc01b10c768fb5ca5b7ac3799b63cda458846287b30392f8d6a7d53b543cb1576a956d5f9c96ca5a88e940a37b167d23db6007d9b44c67830d757f72f147dfb07895196ac9232fb95b24867a55a4b67d38686d44760e23fae1ace913b4156974023bd78d913ca173cd05d9d37404ccc157acb95ee005771f79e835a17efc5b54cc6fceb2ef6127c9ce2a15dc079208ea0d4658001d0020b30e586ea512836d37a942f87ea148ebe7f90cea4670c6f0064b33e0329aef5d",
+  "ja4": "t13d5212h2_b262b3658495_8e6e362c5eac",
+  "ja4_r": "t13d5212h2_002f,0032,0033,0035,0038,0039,003c,003d,0040,0067,006a,006b,009c,009d,009e,009f,00a2,00a3,1301,1302,1303,c009,c00a,c013,c014,c023,c024,c027,c028,c02b,c02c,c02f,c030,c050,c051,c052,c053,c056,c057,c05c,c05d,c060,c061,c09c,c09d,c09e,c09f,c0ac,c0ad,cca8,cca9,ccaa_000a,000b,000d,0016,0017,0023,002b,002d,0033,ff01_0905,0906,0904,0403,0503,0603,0807,0808,081a,081b,081c,0809,080a,080b,0804,0805,0806,0401,0501,0601,0303,0301,0302,0402,0502,0602",
+  "fields": {
+    "record_version": "0301",
+    "legacy_version": "0303",
+    "session_id": "d291068b1da056de3e3606ab4c95269304c80eb707b3c0c3beebf4f035edc358",
+    "ciphers": [
+      "1302",
+      "1303",
+      "1301",
+      "c02f",
+      "c02b",
+      "c030",
+      "c02c",
+      "009e",
+      "c027",
+      "0067",
+      "c028",
+      "006b",
+      "00a3",
+      "009f",
+      "cca9",
+      "cca8",
+      "ccaa",
+      "c0ad",
+      "c09f",
+      "c05d",
+      "c061",
+      "c057",
+      "c053",
+      "00a2",
+      "c0ac",
+      "c09e",
+      "c05c",
+      "c060",
+      "c056",
+      "c052",
+      "c024",
+      "006a",
+      "c023",
+      "0040",
+      "c00a",
+      "c014",
+      "0039",
+      "0038",
+      "c009",
+      "c013",
+      "0033",
+      "0032",
+      "009d",
+      "c09d",
+      "c051",
+      "009c",
+      "c09c",
+      "c050",
+      "003d",
+      "003c",
+      "0035",
+      "002f"
+    ],
+    "compressions": [
+      "00"
+    ],
+    "extensions": [
+      {
+        "type": 65281,
+        "name": "renegotiation_info",
+        "len": 1
+      },
+      {
+        "type": 0,
+        "name": "server_name",
+        "len": 16
+      },
+      {
+        "type": 11,
+        "name": "ec_point_formats",
+        "len": 4
+      },
+      {
+        "type": 10,
+        "name": "supported_groups",
+        "len": 18
+      },
+      {
+        "type": 35,
+        "name": "session_ticket",
+        "len": 0
+      },
+      {
+        "type": 16,
+        "name": "alpn",
+        "len": 14
+      },
+      {
+        "type": 22,
+        "name": "encrypt_then_mac",
+        "len": 0
+      },
+      {
+        "type": 23,
+        "name": "extended_master_secret",
+        "len": 0
+      },
+      {
+        "type": 13,
+        "name": "signature_algorithms",
+        "len": 54
+      },
+      {
+        "type": 43,
+        "name": "supported_versions",
+        "len": 5
+      },
+      {
+        "type": 45,
+        "name": "psk_key_exchange_modes",
+        "len": 2
+      },
+      {
+        "type": 51,
+        "name": "key_share",
+        "len": 1258
+      }
+    ],
+    "sni": "tls.peet.ws",
+    "alpn": [
+      "h2",
+      "http/1.1"
+    ],
+    "supported_versions": [
+      "0304",
+      "0303"
+    ],
+    "signature_algorithms": [
+      "0905",
+      "0906",
+      "0904",
+      "0403",
+      "0503",
+      "0603",
+      "0807",
+      "0808",
+      "081a",
+      "081b",
+      "081c",
+      "0809",
+      "080a",
+      "080b",
+      "0804",
+      "0805",
+      "0806",
+      "0401",
+      "0501",
+      "0601",
+      "0303",
+      "0301",
+      "0302",
+      "0402",
+      "0502",
+      "0602"
+    ],
+    "key_share_groups": [
+      "11ec",
+      "001d"
+    ],
+    "supported_groups": [
+      "11ec",
+      "001d",
+      "0017",
+      "001e",
+      "0018",
+      "0019",
+      "0100",
+      "0101"
+    ],
+    "psk_modes": [
+      "01"
+    ],
+    "cert_compression": []
+  }
+}
