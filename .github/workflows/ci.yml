@@ -23,3 +23,7 @@ jobs:
       - name: wasm32 check (rustls, ring provider)
         run: cargo check --target wasm32-unknown-unknown -p rustls --no-default-features --features std,ring,tls12
         working-directory: vendor/rustls
+        env:
+          # getrandom 0.2 (pulled by ring) refuses wasm32-unknown-unknown by
+          # default; epoxy-tls picks the wasm_js backend with the same cfg.
+          RUSTFLAGS: --cfg getrandom_backend="wasm_js"
