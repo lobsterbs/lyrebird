@@ -16,7 +16,8 @@ our handshakes as its own regular visitor, not as a robot.
 ## Why this exists
 
 Stock rustls ends TLS with an honest, unmistakable fingerprint: no GREASE
-values, a fixed extension order, no X25519MLKEM768 key share, no ALPS, no
+values, a rustls-specific shuffled extension order, no X25519MLKEM768 key
+share, no ALPS, no
 compress_certificate negotiation, and rustls ordering of cipher suites and
 signature algorithms. Sites that fingerprint TLS gate on exactly these tells
 before any page loads. DuckDuckGo refuses the stock shape outright, and the
@@ -84,9 +85,16 @@ the EpoxyIdentity seam and parity gate.
 
 - BoringSSL does not build to wasm32, so byte parity comes from patched rustls
   only.
-- The X25519MLKEM768 key share depends on a crypto provider that implements
-  ML-KEM; the wasm32 feasibility of such a provider is an open question in the
-  baseline milestone, not a settled fact.
+- The X25519MLKEM768 ask is provider work: rustls 0.23.46 builds it only with
+  the aws-lc-rs provider (`prefer-post-quantum`). Settled by experiment
+  (evidence on #3, 2026-11-22): a native handshake against tls.peet.ws
+  succeeds with X25519MLKEM768 offered first (peetprint `4588-29-23-24`), and
+  the same feature set checks clean for wasm32-unknown-unknown (aws-lc-sys
+  0.47.0; the C toolchain must provide libc headers for wasm32, zig cc's wasi
+  libc works, freestanding headers alone do not). Caveat: switching providers
+  is a bigger fingerprint event than the one extension, the aws-lc verifier
+  offers a different signature-scheme list (12 values vs ring's 9) and that
+  alone moves JA4's signature part.
 - rustls is Apache-2.0 OR MIT OR ISC, and this fork keeps that licensing.
 - epoxy-tls is AGPL-3.0-only. A combined wasm bundle that links epoxy-tls with
   lyrebird inherits AGPL-3.0, and the source-offering duty applies when it
