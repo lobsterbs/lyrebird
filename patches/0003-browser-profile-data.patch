@@ -1,0 +1,195 @@
+diff -ruN a/rustls/src/client/browser_profiles.rs b/rustls/src/client/browser_profiles.rs
+--- a/rustls/src/client/browser_profiles.rs	2026-10-13 11:15:01.000000000 +0000
++++ b/rustls/src/client/browser_profiles.rs	2026-11-22 23:30:00.000000000 +0000
+@@ -0,0 +1,179 @@
++//! lyrebird: browser ClientHello profile data, capture-derived.
++//!
++//! The wire ORDER and SET slices below are derived from pinned tls.peet.ws
++//! reference captures of 2026-11-22 (Brave / Chromium 158 and Firefox 160,
++//! Windows). The raw capture JSONs are deliberately not distributed; these
++//! slices are the derived wire data. Consumers (the lyrebird
++//! handshake-probe, epoxy engines embedding this fork) must treat these
++//! arrays as the fingerprint data itself: changing any value changes the
++//! wire and must be justified by a new capture.
++//!
++//! Honest scope: the profiles reorder and filter what the active crypto
++//! provider offers. They cannot conjure suites, schemes, or groups the
++//! provider lacks (aws-lc-rs is required for the X25519MLKEM768-first
++//! captures; on ring the group pin degrades to an honest subset), and the
++//! Firefox captured pre_shared_key is not emitted because honest session
++//! state does not exist and an empty offer was proven rejected by a live
++//! server (unexpected_message on tls.peet.ws, 2026-11-22).
++
++use alloc::boxed::Box;
++use alloc::vec::Vec;
++
++use crate::{CipherSuite, ClientHelloProfile, NamedGroup, SignatureScheme};
++
++use crate::client::client_hello_profile::ProfileStaticExtension;
++
++// Brave / Chromium 158, Windows: wire cipher order, GREASE bookend stripped
++pub const BRAVE_CIPHERS: &[u16] = &[
++    0x1301, 0x1302, 0x1303, 0xc02b, 0xc02f, 0xc02c, 0xc030, 0xcca9, 0xcca8, 0xc013, 0xc014,
++    0x009c, 0x009d, 0x002f, 0x0035,
++];
++// Leading GREASE stripped. The three 0x09xx values lead Brave's list;
++// tls.peet.ws does not decode signature algorithms, so no identity is
++// claimed for them here beyond their wire value.
++pub const BRAVE_SIGS: &[u16] = &[
++    0x0904, 0x0905, 0x0906, 0x0403, 0x0804, 0x0401, 0x0503, 0x0805, 0x0501, 0x0806, 0x0601,
++];
++// GREASE group stripped; X25519MLKEM768 first
++pub const BRAVE_GROUPS: &[u16] = &[0x11ec, 0x001d, 0x0017, 0x0018];
++
++// Firefox 160, Windows: no GREASE anywhere
++pub const FIREFOX_CIPHERS: &[u16] = &[
++    0x1301, 0x1303, 0x1302, 0xc02b, 0xc02f, 0xcca9, 0xcca8, 0xc02c, 0xc030, 0xc013, 0xc014,
++    0x009c, 0x009d, 0x002f, 0x0035,
++];
++pub const FIREFOX_SIGS: &[u16] = &[
++    0x0403, 0x0503, 0x0603, 0x0804, 0x0805, 0x0806, 0x0401, 0x0501, 0x0601, 0x0203, 0x0201,
++];
++pub const FIREFOX_GROUPS: &[u16] = &[0x11ec, 0x001d, 0x0017, 0x0018, 0x0019];
++
++// Capture-derived extension order, wire type ids. Both browsers start at
++// server_name; real chrome-family hellos keep every GREASE extension at the
++// tail (zero leading grease), so the Brave slice carries none and the
++// ClientHello encoder emits trailing bookends only. IDs follow tls.peet.ws
++// rendering of the 2026-11-22 captures; ALPS is 17613 (0x44cd) as peet
++// printed it.
++pub const BRAVE_EXT_ORDER: &[u16] = &[
++    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x44cd, 0x0012, 0x0017, 0x001b, 0x0023,
++    0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01,
++];
++// wire: ALPS body 01 02 68 32 ("h2" list); SCT empty; renego single 0x00
++pub const BRAVE_STATIC_EXTS: &[ProfileStaticExtension] = &[
++    ProfileStaticExtension { ext_type: 0x0012, body: &[] },
++    ProfileStaticExtension { ext_type: 0x44cd, body: &[0x01, 0x02, 0x68, 0x32] },
++    ProfileStaticExtension { ext_type: 0xff01, body: &[0x00] },
++];
++
++pub const FIREFOX_EXT_ORDER: &[u16] = &[
++    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x0012, 0x0017, 0x001b, 0x001c, 0x0022, 0x0029,
++    0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01,
++];
++// wire: SCT empty; record_size_limit 0x4001; delegated_credentials
++// scheme list; renego single 0x00. The captured pre_shared_key (0x0029)
++// is NOT emitted: see the module docs for the proof that an empty offer
++// is rejected live. Extension count is 16 vs the capture's 17.
++pub const FIREFOX_STATIC_EXTS: &[ProfileStaticExtension] = &[
++    ProfileStaticExtension { ext_type: 0x0012, body: &[] },
++    ProfileStaticExtension { ext_type: 0x001c, body: &[0x40, 0x01] },
++    ProfileStaticExtension {
++        ext_type: 0x0022,
++        body: &[0x04, 0x04, 0x03, 0x05, 0x03, 0x06, 0x03, 0x02, 0x03],
++    },
++    ProfileStaticExtension { ext_type: 0xff01, body: &[0x00] },
++];
++
++// Cert-compression algorithms each profile advertises (RFC 8879 ids:
++// zlib=1, brotli=2, zstd=3). There is no zstd decompressor, so the
++// Firefox list is honestly two of three.
++pub const BRAVE_COMPRESSION: &[u16] = &[0x0002];
++pub const FIREFOX_COMPRESSION: &[u16] = &[0x0001, 0x0002];
++
++fn build(
++    grease: bool,
++    ciphers: &'static [u16],
++    sigs: &'static [u16],
++    groups: &'static [u16],
++    ext_order: &'static [u16],
++    statics: &'static [ProfileStaticExtension],
++    grease_tail: usize,
++    ech_grease: bool,
++) -> &'static ClientHelloProfile {
++    Box::leak(Box::new(ClientHelloProfile {
++        grease,
++        cipher_suites: Box::leak(
++            ciphers
++                .iter()
++                .map(|v| CipherSuite::from(*v))
++                .collect::<Vec<CipherSuite>>()
++                .into_boxed_slice(),
++        ),
++        signature_schemes: Box::leak(
++            sigs
++                .iter()
++                .map(|v| SignatureScheme::from(*v))
++                .collect::<Vec<SignatureScheme>>()
++                .into_boxed_slice(),
++        ),
++        named_groups: Box::leak(
++            groups
++                .iter()
++                .map(|v| NamedGroup::from(*v))
++                .collect::<Vec<NamedGroup>>()
++                .into_boxed_slice(),
++        ),
++        extension_order: ext_order,
++        extensions: statics,
++        grease_extension_tail: grease_tail,
++        ech_grease,
++    }))
++}
++
++/// The Brave (Chromium 158) order profile with GREASE bookends, the
++/// captured extension set/order, and GREASE ECH.
++pub fn brave() -> &'static ClientHelloProfile {
++    build(
++        true,
++        BRAVE_CIPHERS,
++        BRAVE_SIGS,
++        BRAVE_GROUPS,
++        BRAVE_EXT_ORDER,
++        BRAVE_STATIC_EXTS,
++        2,
++        true,
++    )
++}
++
++/// The Firefox 160 order profile, extension set/order, no GREASE,
++/// GREASE ECH.
++pub fn firefox() -> &'static ClientHelloProfile {
++    build(
++        false,
++        FIREFOX_CIPHERS,
++        FIREFOX_SIGS,
++        FIREFOX_GROUPS,
++        FIREFOX_EXT_ORDER,
++        FIREFOX_STATIC_EXTS,
++        0,
++        true,
++    )
++}
++
++/// ALPN both captured browsers offer, in wire order.
++pub fn alpn() -> Vec<Vec<u8>> {
++    alloc::vec![b"h2".to_vec(), b"http/1.1".to_vec()]
++}
++
++/// The profile's advertized cert-decompression algorithms, mapped to
++/// decompressors in the profile's wire order.
++pub fn cert_decompressors(order: &[u16]) -> Vec<&'static dyn crate::compress::CertDecompressor> {
++    let defaults = crate::compress::default_cert_decompressors();
++    order
++        .iter()
++        .filter_map(|want| {
++            defaults
++                .iter()
++                .find(|d| u16::from(d.algorithm()) == *want)
++                .copied()
++        })
++        .collect()
++}
+diff -ruN a/rustls/src/lib.rs b/rustls/src/lib.rs
+--- a/rustls/src/lib.rs	2026-10-13 11:15:01.000000000 +0000
++++ b/rustls/src/lib.rs	2026-11-22 23:30:00.000000000 +0000
+@@ -583,6 +583,8 @@
+     pub(super) mod builder;
+     mod client_conn;
+     pub mod client_hello_profile;
++    // lyrebird: capture-derived browser profile data (issue-4 wire facts)
++    pub mod browser_profiles;
+     mod common;
+     mod ech;
+     pub(super) mod handy;

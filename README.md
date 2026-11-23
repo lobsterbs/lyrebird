@@ -151,7 +151,12 @@ HEADERS priority included. CI is strict end to end: patches apply with
 `--fuzz=0` against the pinned tarball, the harness discovers every
 `test_*.py`, probe unit tests freeze the profile data and the exact
 frame bytes, and the release build (the binary all captures are taken
-with) is itself gated.
+with) is itself gated. The profile data now lives inside the patched
+rustls as `rustls::client::browser_profiles` (0003), so engines that
+embed this fork — epoxy-tls through its `EpoxyIdentity` seam — read one
+frozen copy of the wire data instead of duplicating the slices; the
+probe's captures after the move are wire-identical (ja4 unchanged; the
+per-connection GREASE values of RFC 8701 vary by design).
 
 ## Known constraints
 

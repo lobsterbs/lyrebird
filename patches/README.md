@@ -8,7 +8,10 @@ wasm32-unknown-unknown with the ring provider).
 
 Patches in this directory are what turn baseline rustls into the lyrebird
 ClientHello shaping work of issues #3 and #4. Keep them small, one concern per
-patch, and ordered so each applies on top of the previous one.
+patch, and ordered so each applies on top of the previous one. 0003 moves the
+capture-derived browser profile DATA into the patched rustls itself
+(`rustls::client::browser_profiles`) so embedding engines (epoxy) consume one
+frozen copy instead of duplicating the slices.
 
 `tools/apply-rustls.sh` applies every patch with `--fuzz=0` against the
 pinned tarball, so a patch that no longer applies byte-clean must be
