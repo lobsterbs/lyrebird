@@ -26,13 +26,19 @@ FAMILIES = ["curl-openssl", "node22", "python312", "rustls-baseline", "rustls-gr
 # Wire extension order for lyrebird's own profile captures: the exact
 # sequence (types in wire order) including GREASE positions. GREASE types
 # vary per run, so they are matched by the RFC 8701 ?a?a rule.
+# gap-ledger note (2026-11-25): ALPS (44cd) and SCT (0012) are not offered
+# by the brave profile, and SCT (0012) / delegated_credentials (0022) are not
+# offered by the firefox profile. Offering them breaks live servers in ways
+# the client cannot honor: ALPS negotiation needs the client EE message,
+# SCT offers invite CertificateEntry SCT lists this rustls rejects, and DC
+# offers make DC-issuing edges send credentials this client cannot verify.
 LYREBIRD_BRAVE_ORDER = [
-    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x44cd, 0x0012, 0x0017, 0x001b,
+    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x0017, 0x001b,
     0x0023, 0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01, "grease", "grease",
 ]
 LYREBIRD_FIREFOX_ORDER = [
-    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x0012, 0x0017, 0x001b, 0x001c,
-    0x0022, 0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01,
+    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x0017, 0x001b, 0x001c,
+    0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01,
 ]
 
 
@@ -210,14 +216,17 @@ class WireOrderFrozen(unittest.TestCase):
         cap = load(os.path.join(CLIENTS, "lyrebird-firefox.json"))
         types = [e["type"] for e in cap["fields"]["extensions"]]
         self.assertNotIn(0x0023, types)
-        self.assertIn(0x001c, types)   # record_size_limit
-        self.assertIn(0x0022, types)   # delegated_credentials
+        self.assertIn(0x001c, types)    # record_size_limit
+        self.assertNotIn(0x0022, types)  # delegated_credentials: gap ledger
+        self.assertNotIn(0x0012, types) # SCT: gap ledger
 
-    def test_brave_alps_body(self):
+    def test_brave_static_gaps(self):
+        # 2026-11-25: ALPS and SCT are no longer offered (live-server
+        # verdicts; see the gap-ledger note above the order constants).
         cap = load(os.path.join(CLIENTS, "lyrebird-brave.json"))
-        raw = bytes.fromhex(cap["raw"])
-        alps = [e for e in cap["fields"]["extensions"] if e["type"] == 0x44CD]
-        self.assertEqual(len(alps), 1)
+        types = [e["type"] for e in cap["fields"]["extensions"]]
+        self.assertNotIn(0x44CD, types)
+        self.assertNotIn(0x0012, types)
 
 
 # Real browser captures (operator's tls.peet.ws 2026-11-22 runs) reduced to
@@ -230,9 +239,23 @@ REAL_BRAVE_EXTS = "0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,f
 REAL_FIREFOX_JA4 = "t13d1517h2_8daaf6152771_e6dcd7ae0a9e"
 REAL_FIREFOX_EXTS = "0005,000a,000b,000d,0012,0017,001b,001c,0022,0029,002b,002d,0033,fe0d,ff01"
 REAL_FIREFOX_SIGS = "0403,0503,0603,0804,0805,0806,0401,0501,0601,0203,0201"
+# current pinned lyrebird ext+sig hashes (gap-ledger state, refreshed
+# with the fixture regeneration when the gaps changed on 2026-11-25)
+LYREBIRD_BRAVE_EXT_SIG_HASH = "9682305a41b3"
+LYREBIRD_FIREFOX_EXT_SIG_HASH = "d7d6985f8b1a"
 # Firefox-only gaps the provider cannot express:
 FIREFOX_UNSIGNABLE_SIGS = ("0203", "0201")  # ecdsa_ed25519/ed448-era, not offerable
 FIREFOX_UNSIGNABLE_EXT = "0029"             # pre_shared_key: needs real session state
+# Structural gaps (2026-11-25, live-server verdicts, all profiles):
+# offering without the client-side support breaks real servers, so these
+# extensions are not offered at all. ALPS: google aborts the handshake when
+# the client cannot answer with its own EncryptedExtensions. SCT: Cloudflare
+# edges answer the offer with CertificateEntry SCT lists rustls 0.23.46
+# rejects as UnknownCertificateExtension. DC: verifiable delegated
+# credentials are not implemented; the captured body was also malformed
+# (1-byte instead of 2-byte vector length, RFC 9345).
+BRAVE_STRUCTURAL_GAP_EXTS = ("44cd", "0012")
+FIREFOX_STRUCTURAL_GAP_EXTS = ("0012", "0022")
 
 
 class ParityLedger(unittest.TestCase):
@@ -250,17 +273,21 @@ class ParityLedger(unittest.TestCase):
     def ext_r(self, ja4_r):
         return set(ja4_r.split("_")[2].split(",")) if ja4_r.count("_") >= 3 else set()
 
-    def test_brave_extension_signature_hash_matches_real(self):
+    def test_brave_extension_signature_hash_ledger(self):
         ours = self.cap("lyrebird-brave")["ja4"].split("_")
-        self.assertEqual(ours[2], REAL_BRAVE_JA4.split("_")[2],
-                         "brave extension+signature hash drifted from the real capture")
+        self.assertNotEqual(ours[2], REAL_BRAVE_JA4.split("_")[2],
+                            "brave ext+sig hash equals the real capture only if"
+                            " the structural gaps closed; repin then")
+        self.assertEqual(ours[2], LYREBIRD_BRAVE_EXT_SIG_HASH)
 
     def test_brave_sig_algorithms_byte_exact(self):
         self.assertEqual(",".join(self.sigs("lyrebird-brave")), REAL_BRAVE_SIGS)
 
-    def test_brave_extension_set_matches_real(self):
+    def test_brave_extension_set_ledger(self):
         ours = self.ext_r(self.cap("lyrebird-brave")["ja4_r"])
-        self.assertEqual(ours, set(REAL_BRAVE_EXTS.split(",")))
+        real = set(REAL_BRAVE_EXTS.split(","))
+        self.assertEqual(ours, real - set(BRAVE_STRUCTURAL_GAP_EXTS),
+                         "brave ext set = capture minus ledgered gaps")
 
     def test_brave_cipher_gap_ledger(self):
         cap = self.cap("lyrebird-brave")
@@ -287,15 +314,18 @@ class ParityLedger(unittest.TestCase):
             REAL_FIREFOX_JA4.split("_")[2])
         caps = self.cap("lyrebird-firefox")
         self.assertLess(len(self.sigs("lyrebird-firefox")), len(REAL_FIREFOX_SIGS.split(",")))
-        self.assertEqual(caps["ja4"].split("_")[2], "ba4afa82cbcb")
+        self.assertEqual(caps["ja4"].split("_")[2], LYREBIRD_FIREFOX_EXT_SIG_HASH)
 
     def test_firefox_extension_set_ledger(self):
-        # the ONLY set difference vs the real capture is pre_shared_key:
-        # a real PSK binder cannot be conjured honestly (an empty offer
-        # is rejected by live servers, proven 2026-11-22)
+        # set differences vs the real capture, all ledgered:
+        # pre_shared_key (honest session state cannot be conjured, empty
+        # offer rejected live 2026-11-22) and the 2026-11-25 structural
+        # gaps (SCT, delegated_credentials).
         ours = self.ext_r(self.cap("lyrebird-firefox")["ja4_r"])
         real = set(REAL_FIREFOX_EXTS.split(","))
-        self.assertEqual(ours, real - {FIREFOX_UNSIGNABLE_EXT})
+        self.assertEqual(ours,
+                         real - {FIREFOX_UNSIGNABLE_EXT}
+                              - set(FIREFOX_STRUCTURAL_GAP_EXTS))
         self.assertNotIn(0x0029, [e["type"] for e in
                                   self.cap("lyrebird-firefox")["fields"]["extensions"]])
         # and the shared values are all byte-exact members of the real set

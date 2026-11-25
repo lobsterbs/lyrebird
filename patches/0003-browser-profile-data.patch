@@ -1,7 +1,7 @@
 diff -ruN a/rustls/src/client/browser_profiles.rs b/rustls/src/client/browser_profiles.rs
 --- a/rustls/src/client/browser_profiles.rs	2026-10-13 11:15:01.000000000 +0000
 +++ b/rustls/src/client/browser_profiles.rs	2026-11-22 23:30:00.000000000 +0000
-@@ -0,0 +1,179 @@
+@@ -0,0 +1,189 @@
 +//! lyrebird: browser ClientHello profile data, capture-derived.
 +//!
 +//! The wire ORDER and SET slices below are derived from pinned tls.peet.ws
@@ -56,33 +56,43 @@ diff -ruN a/rustls/src/client/browser_profiles.rs b/rustls/src/client/browser_pr
 +// tail (zero leading grease), so the Brave slice carries none and the
 +// ClientHello encoder emits trailing bookends only. IDs follow tls.peet.ws
 +// rendering of the 2026-11-22 captures; ALPS is 17613 (0x44cd) as peet
-+// printed it.
++// printed it. Types the profiles can no longer honor stay pinned here as
++// the visible gap ledger (see the statics arrays for the verdicts);
++// nothing emits them.
 +pub const BRAVE_EXT_ORDER: &[u16] = &[
 +    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x44cd, 0x0012, 0x0017, 0x001b, 0x0023,
 +    0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01,
 +];
-+// wire: ALPS body 01 02 68 32 ("h2" list); SCT empty; renego single 0x00
++// Structural gaps vs the capture (2026-11-25, live-server verdicts):
++// ALPS (0x44cd) and SCT (0x0012) are NOT offered. ALPS negotiates on real
++// servers (e.g. google.com), which then send settings in EncryptedExtensions
++// and expect the client's own EE back; a client without the ALPS client side
++// dies there (UnsolicitedEncryptedExtension). The SCT offer invites
++// CertificateEntry SCT lists (e.g. Cloudflare edges) that this rustls client
++// rejects (InvalidMessage::UnknownCertificateExtension). The captured ALPS
++// body was also malformed (missing the 2-byte vector length of
++// draft-vvv-tls-alps ApplicationSettingsSupport). Renego carries no state.
 +pub const BRAVE_STATIC_EXTS: &[ProfileStaticExtension] = &[
-+    ProfileStaticExtension { ext_type: 0x0012, body: &[] },
-+    ProfileStaticExtension { ext_type: 0x44cd, body: &[0x01, 0x02, 0x68, 0x32] },
 +    ProfileStaticExtension { ext_type: 0xff01, body: &[0x00] },
 +];
++
 +
 +pub const FIREFOX_EXT_ORDER: &[u16] = &[
 +    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x0012, 0x0017, 0x001b, 0x001c, 0x0022, 0x0029,
 +    0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01,
 +];
-+// wire: SCT empty; record_size_limit 0x4001; delegated_credentials
-+// scheme list; renego single 0x00. The captured pre_shared_key (0x0029)
-+// is NOT emitted: see the module docs for the proof that an empty offer
-+// is rejected live. Extension count is 16 vs the capture's 17.
++// Structural gaps vs the capture (2026-11-25, live-server verdicts):
++// SCT (0x0012) and delegated_credentials (0x0022) are NOT offered. The
++// SCT offer invites CertificateEntry SCT lists (e.g. Cloudflare edges)
++// that this rustls client rejects (InvalidMessage::UnknownCertificate-
++// Extension); the DC offer makes DC-issuing edges send delegated
++// credentials this client cannot verify. The captured DC body was also
++// malformed (1-byte length instead of the 2-byte vector length of RFC
++// 9345). The captured pre_shared_key (0x0029) stays pinned in the order
++// slice but unoffered: an empty offer was proven rejected live
++// (2026-11-22).
 +pub const FIREFOX_STATIC_EXTS: &[ProfileStaticExtension] = &[
-+    ProfileStaticExtension { ext_type: 0x0012, body: &[] },
 +    ProfileStaticExtension { ext_type: 0x001c, body: &[0x40, 0x01] },
-+    ProfileStaticExtension {
-+        ext_type: 0x0022,
-+        body: &[0x04, 0x04, 0x03, 0x05, 0x03, 0x06, 0x03, 0x02, 0x03],
-+    },
 +    ProfileStaticExtension { ext_type: 0xff01, body: &[0x00] },
 +];
 +

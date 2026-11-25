@@ -106,4 +106,24 @@ mod tests {
         assert!(!has_psk_static);
         assert!(FIREFOX_EXT_ORDER.contains(&0x0029));
     }
+
+    #[test]
+    fn structural_gap_statics_are_ledgered() {
+        // 2026-11-25 live-server verdicts: extensions whose negotiation
+        // this rustls cannot honor are not offered (see browser_profiles).
+        // brave: ALPS (server aborts on the missing client EE) and SCT
+        // (invites CertificateEntry SCT lists the client rejects).
+        for ext in BRAVE_STATIC_EXTS {
+            assert!(ext.ext_type != 0x44cd && ext.ext_type != 0x0012);
+        }
+        // firefox: SCT and delegated_credentials (edges then send
+        // credentials this client cannot verify).
+        for ext in FIREFOX_STATIC_EXTS {
+            assert!(ext.ext_type != 0x0012 && ext.ext_type != 0x0022);
+        }
+        // the capture-derived orders keep the gap types pinned so the gap
+        // stays visible on the wire contract, but nothing emits them
+        assert!(BRAVE_EXT_ORDER.contains(&0x44cd));
+        assert!(FIREFOX_EXT_ORDER.contains(&0x0029));
+    }
 }

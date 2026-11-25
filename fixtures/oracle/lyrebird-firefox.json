@@ -1,14 +1,12 @@
 {
   "schema": 1,
-  "source": "tls.peet.ws /api/all (server-side view of lyrebird's own handshake-probe firefox-h2-live mode over HTTP/2: pinned rustls v/0.23.46, aws-lc provider, browser order profile from the 2026-11-22 capture)",
-  "captured_at": "2026-11-22T22:07:29+00:00",
-  "user_agent": "lyrebird-probe/0.4",
-  "ja4": "t13d916h2_f91f431d341e_ba4afa82cbcb",
-  "ja4_r": "t13d916h2_1301,1302,1303,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,001c,0022,002b,002d,0033,fe0d,ff01_0403,0503,0603,0804,0805,0806,0401,0501,0601",
+  "source": "tls.peet.ws /api/all (server-side view of lyrebird's own handshake-probe firefox-h2-live mode over HTTP/2: pinned rustls v/0.23.46, aws-lc provider, browser order profile from the 2026-11-22 capture, gap ledger refreshed 2026-11-25)",
+  "captured_at": "2026-11-25T12:21:03+00:00",
+  "user_agent": "lyrebird-probe/0.1",
+  "ja4": "t13d914h2_f91f431d341e_d7d6985f8b1a",
+  "ja4_r": "t13d914h2_1301,1302,1303,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0017,001b,001c,002b,002d,0033,fe0d,ff01_0403,0503,0603,0804,0805,0806,0401,0501,0601",
   "akamai_fingerprint": "1:65536;2:0;4:131072;5:16384|12517377|0|m,p,a,s",
   "akamai_fingerprint_hash": "6ea73faa8fc5aac76bded7bd238f6433",
-  "alpn_offered": [
-    "h2"
-  ],
-  "note": "Firefox profile live acceptance over the engine path: HTTP/2 with hand-rolled SETTINGS, WINDOW_UPDATE and request HEADERS shaped from the browser capture. peet rendered the akamai http2 fingerprint '1:65536;2:0;4:131072;5:16384|12517377|0|m,p,a,s' (hash 6ea73faa8fc5aac76bded7bd238f6433) exactly equal to the real browser capture, and rendered the HEADERS priority exactly (dep 0, weight 22). TLS layer: extension order field-by-field equal, zero GREASE. Remaining honest gaps: cipher offer is 9 suites of the browser's 15, signature schemes lack 0203/0201 (not offerable by the provider), named groups lack p-521, and no pre_shared_key is offered (real session state cannot be conjured and an empty offer is rejected by live servers, proven 2026-11-22)."
+  "alpn_offered": {},
+  "note": "Firefox profile live acceptance over the engine path: HTTP/2 with hand-rolled SETTINGS, WINDOW_UPDATE and request HEADERS shaped from the browser capture. Remaining honest gaps: cipher offer is 9 suites of the browser's 15 (provider availability) with the ja4 count digit and cipher hash differing accordingly, and the structural-gap extension ledger of 2026-11-25 (ALPS + SCT not offered by brave; SCT + delegated_credentials not offered by firefox; live-server verdicts recorded in tools/capture/test_clienthello.py)."
 }

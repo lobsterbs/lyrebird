@@ -42,10 +42,13 @@ done; the pinned captures are the strong gate.
 ## Status
 
 Brave (Chromium 158) and Firefox 160 profiles shipped, live-verified
-against tls.peet.ws (v0.4.2). With a profile active:
+against tls.peet.ws. With a profile active:
 
-- Extension set/order and signature list match the real Brave capture
-  byte for byte: JA4 tail `806a8c22fdea`, signature list entry-for-entry.
+- Extension set/order and signature list match the real Brave capture:
+  JA4 tail `9682305a41b3` (Firefox: `d7d6985f8b1a`), signature list
+  entry-for-entry. The tails changed from the 2026-11-22 capture tails
+  (`806a8c22fdea` / `ba4afa82cbcb`) after the 2026-11-25 structural-gap
+  fix below.
 - h2 shape is 1:1 with both real browsers, priority frames included:
   Brave akamai fingerprint
   `1:65536;2:0;4:6291456;6:262144|15663105|0|m,a,s,p`
@@ -56,11 +59,19 @@ against tls.peet.ws (v0.4.2). With a profile active:
   handshakes, gated nightly by its live-parity workflow.
 
 Honest gaps stay frozen in the parity ledger
-(`tools/capture/test_clienthello.py`): the provider offers 9 of the
-browsers' 15 cipher suites (JA4 count digit 9 vs 15), Firefox's legacy
-0203/0201 signature schemes are not offerable, its psk extension needs
-real session state, and its zstd algorithm has no rustls decompressor.
-Remainders and full evidence live on
+(`tools/capture/test_clienthello.py`). Structural extension gaps,
+verdicts recorded live 2026-11-25: rustls cannot offer ALPS
+(0x44cd) or CertificateEntry SCT lists (0x0012) in the static
+extensions, and Delegated Credentials (0x0022) cannot be offered
+without a verifier for them. Offering any of them aborts real-server
+handshakes: google.com negotiates ALPS and expects a client
+EncryptedExtensions back (rustls aborts), Cloudflare-fronted edges
+send delegated credentials rustls 0.23.46 cannot verify, and SCT
+invites a certificate entry extension rustls rejects. All three stay
+pinned in the capture-truth order lists as a visible ledger but are
+not emitted. CI parity against tls.peet.ws never caught this because
+peet does not actively parse those extensions; probes now also cover
+real servers. Provider and profile remainders live on
 [#4](../../issues/4), [#5](../../issues/5) and [#6](../../issues/6).
 
 ## Known constraints
