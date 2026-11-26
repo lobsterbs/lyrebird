@@ -229,6 +229,59 @@ class WireOrderFrozen(unittest.TestCase):
         self.assertNotIn(0x0012, types)
 
 
+class GreaseEchDeterminism(unittest.TestCase):
+    """GREASE ECH (0xfe0d) shape is deterministic where the real browser is.
+
+    The suite carried by the GREASE ECH offer is a compile-time constant in
+    the patched rustls (DH_KEM_P256_HKDF_SHA256_AES_128): no per-connection
+    coin flip in suite selection. Selecting the suite randomly where real
+    Chrome selects deterministically is the exact detection class fixed
+    publicly as uTLS CVE-2026-27017, so the wire contract is pinned here.
+    Random per connection BY DESIGN (RFC 9460 GREASE): config_id, the
+    ephemeral enc key, and the payload. Suite + KEM shape: not random.
+    """
+
+    SUITE = b"\x00\x01\x00\x01"  # kdf 0x0001 HKDF-SHA256, ae 0x0001 AES-128-GCM
+    P256_ENC_LEN = 65             # uncompressed point: 0x04 || X || Y
+
+    def ech_body(self, family):
+        cap = load(os.path.join(CLIENTS, family + ".json"))
+        b = bytes.fromhex(cap["raw"])
+        p = 5 + 4 + 2 + 32
+        p += 1 + b[p]                       # session id
+        p += 2 + int.from_bytes(b[p:p + 2], "big")  # ciphers
+        p += 1 + b[p]                       # compression methods
+        end = p + int.from_bytes(b[p:p + 2], "big")
+        p += 2
+        while p < end:
+            et = int.from_bytes(b[p:p + 2], "big")
+            el = int.from_bytes(b[p + 2:p + 4], "big")
+            if et == 0xFE0D:
+                return b[p + 4:p + 4 + el]
+            p += 4 + el
+        self.fail(family + ": no 0xfe0d extension in capture")
+
+    def check(self, family):
+        body = self.ech_body(family)
+        self.assertEqual(body[0], 0x00, family + ": not ClientHelloOuter")
+        self.assertEqual(body[1:5], self.SUITE,
+                         family + ": GREASE ECH suite drifted from the pinned "
+                         "DHKEM(P256)+HKDF-SHA256+AES-128 constant")
+        enc_len = int.from_bytes(body[6:8], "big")
+        self.assertEqual(enc_len, self.P256_ENC_LEN,
+                         family + ": enc length no longer a P-256 share")
+        self.assertEqual(body[8], 0x04, family + ": enc is not an uncompressed point")
+        payload_len = int.from_bytes(body[8 + enc_len:10 + enc_len], "big")
+        self.assertGreater(payload_len, 0, family + ": empty GREASE payload")
+        self.assertEqual(len(body), 10 + enc_len + payload_len)
+
+    def test_brave_grease_ech_suite_deterministic(self):
+        self.check("lyrebird-brave")
+
+    def test_firefox_grease_ech_suite_deterministic(self):
+        self.check("lyrebird-firefox")
+
+
 # Real browser captures (operator's tls.peet.ws 2026-11-22 runs) reduced to
 # constants. The raw capture JSONs are never committed; these slices ship
 # as code (operator decision).
