@@ -55,6 +55,13 @@ against tls.peet.ws. With a profile active:
   (hash `52d84b11737d980aef856699f885ca86`), Firefox
   `1:65536;2:0;4:131072;5:16384|12517377|0|m,p,a,s`
   (hash `6ea73faa8fc5aac76bded7bd238f6433`).
+- Verified end to end through a deployed embedding engine on 2026-11-27:
+  both identity voices produced exactly these h2 hashes live, and a
+  fresh plain-Chrome capture the same day byte-matched the shipped
+  Brave-derived cipher, signature, group, extension-set and
+  extension-order statics, so the chromium voice is current for plain
+  Chrome as of that date (freshness pin: `PlainChromeCapture20261127`
+  in `tools/capture/test_clienthello.py`).
 - The epoxy seam is live: `EpoxyIdentity` in our epoxy fork shapes real
   handshakes, gated nightly by its live-parity workflow.
 

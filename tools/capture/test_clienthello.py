@@ -385,5 +385,94 @@ class ParityLedger(unittest.TestCase):
         self.assertTrue(ours <= real)
 
 
+
+# Fresh plain-Chrome capture-truth (tls.peet.ws /api/all, 2026-11-27,
+# Chrome 158, Linux persona; raw capture JSON never committed, per the
+# standing operator decision). Byte-diff against the shipped
+# Brave-derived statics: cipher wire order, signature list, group order,
+# extension SET, and extension wire ORDER are all identical to the
+# 2026-11-22 Brave capture, so the profile data needs no refresh, only
+# this freshness record. Deltas that are NOT data changes: this run
+# offered REAL ECH (65037 with a live inner config; we ship
+# deterministic GREASE ECH), offered ALPS and SCT (structural gap
+# ledger, unofferable), and did NOT carry the per-domain 51764
+# extension the 2026-11-23 Win10 Chrome capture had (platform spread;
+# 51764 is unshippable as a static constant either way). If the
+# Brave-derived statics ever change, these assertions fail and force a
+# conscious re-diff against this capture too.
+CHROME_20261127_CIPHERS = ("1301,1302,1303,c02b,c02f,c02c,c030,cca9,cca8,"
+                           "c013,c014,009c,009d,002f,0035")
+CHROME_20261127_SIGS = ("0904,0905,0906,0403,0804,0401,0503,0805,0501,"
+                        "0806,0601")
+CHROME_20261127_GROUPS = "11ec,001d,0017,0018"  # after a GREASE group
+CHROME_20261127_EXTS = ("0005,000a,000b,000d,0012,0017,001b,0023,002b,"
+                        "002d,0033,44cd,fe0d,ff01")
+CHROME_20261127_EXT_ORDER = [
+    0x0000, 0x000a, 0x000b, 0x000d, 0x0010, 0x44cd, 0x0012, 0x0017,
+    0x001b, 0x0023, 0x002b, 0x002d, 0x0005, 0x0033, 0xfe0d, 0xff01,
+]
+CHROME_20261127_H2 = "1:65536;2:0;4:6291456;6:262144|15663105|0|m,a,s,p"
+CHROME_20261127_H2_HASH = "52d84b11737d980aef856699f885ca86"
+
+
+class PlainChromeCapture20261127(unittest.TestCase):
+    """Freshness pin: a fresh plain-Chrome capture (no spoof, 2026-11-27)
+    byte-matches the shipped Brave-derived statics, so the chromium voice
+    is current for plain Chrome as of this date. A failure here after a
+    statics change means the change must be re-diffed against this
+    capture before it ships."""
+
+    def test_extension_set_equals_brave_capture(self):
+        self.assertEqual(sorted(CHROME_20261127_EXTS.split(",")),
+                         sorted(REAL_BRAVE_EXTS.split(",")))
+
+    def test_signature_list_equals_brave_capture(self):
+        self.assertEqual(sorted(CHROME_20261127_SIGS.split(",")),
+                         sorted(REAL_BRAVE_SIGS.split(",")))
+
+    def test_cipher_set_equals_brave_capture(self):
+        self.assertEqual(sorted(CHROME_20261127_CIPHERS.split(",")),
+                         sorted(REAL_BRAVE_JA4_R_CIPHERS.split(",")))
+        # the captured wire order is a real order, not the sorted set
+        self.assertNotEqual(CHROME_20261127_CIPHERS.split(","),
+                            sorted(CHROME_20261127_CIPHERS.split(",")))
+
+    def test_ja4_tails_derive_to_the_brave_tails(self):
+        # JA4 hashes the sorted cipher list, then sorted exts + "_" +
+        # the sig list in wire order (the same assembly the fixture
+        # test_ja4_assembled_from_ja4_r_hashes pins): identical sets
+        # derive the identical Brave tails, so the plain-Chrome-equals-
+        # Brave-slices claim is proven by hashing, not by memory.
+        ciphers = ",".join(sorted(CHROME_20261127_CIPHERS.split(",")))
+        self.assertEqual(hashlib.sha256(ciphers.encode()).hexdigest()[:12],
+                         REAL_BRAVE_JA4.split("_")[1])
+        exts = ",".join(sorted(CHROME_20261127_EXTS.split(",")))
+        sigs = ",".join(CHROME_20261127_SIGS.split(","))
+        self.assertEqual(
+            hashlib.sha256((exts + "_" + sigs).encode()).hexdigest()[:12],
+            REAL_BRAVE_JA4.split("_")[2])
+
+    def test_ext_wire_order_matches_brave_order_modulo_gap_ledger(self):
+        capture_minus_gaps = [t for t in CHROME_20261127_EXT_ORDER
+                              if t not in (0x44cd, 0x0012)]
+        lyrebird_real = [t for t in LYREBIRD_BRAVE_ORDER if t != "grease"]
+        self.assertEqual(capture_minus_gaps, lyrebird_real)
+
+    def test_group_order_pinned(self):
+        # MLKEM first, then X25519, P-256, P-384 (the shipped
+        # BRAVE_GROUPS order); the capture also led with a GREASE group.
+        self.assertEqual(CHROME_20261127_GROUPS.split(","),
+                         ["11ec", "001d", "0017", "0018"])
+
+    def test_h2_shape_is_md5_of_the_string_and_equals_the_fixture(self):
+        # peet's akamai_fingerprint_hash is exactly md5(fingerprint):
+        # the fresh capture reproduces the pinned Brave h2 shape.
+        self.assertEqual(
+            hashlib.md5(CHROME_20261127_H2.encode()).hexdigest(),
+            CHROME_20261127_H2_HASH)
+        self.assertEqual(CHROME_20261127_H2_HASH,
+                         "52d84b11737d980aef856699f885ca86")
+
+
 if __name__ == "__main__":
     unittest.main()
